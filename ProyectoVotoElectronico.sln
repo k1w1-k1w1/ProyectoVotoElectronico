@@ -1,9 +1,11 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio Version 17
-VisualStudioVersion = 17.13.35919.96 d17.13
+VisualStudioVersion = 17.13.35919.96
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ProyectoVotoElectronico", "ProyectoVotoElectronico\ProyectoVotoElectronico.csproj", "{C2D55996-335C-44E9-9925-435AF7C65C30}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "voto.API", "voto.API\voto.API.csproj", "{23D008D6-7D4C-471A-963B-07E38BE85324}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -15,6 +17,10 @@ Global
 		{C2D55996-335C-44E9-9925-435AF7C65C30}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{C2D55996-335C-44E9-9925-435AF7C65C30}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{C2D55996-335C-44E9-9925-435AF7C65C30}.Release|Any CPU.Build.0 = Release|Any CPU
+		{23D008D6-7D4C-471A-963B-07E38BE85324}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{23D008D6-7D4C-471A-963B-07E38BE85324}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{23D008D6-7D4C-471A-963B-07E38BE85324}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{23D008D6-7D4C-471A-963B-07E38BE85324}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

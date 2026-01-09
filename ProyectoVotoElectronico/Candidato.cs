@@ -8,12 +8,14 @@ namespace ProyectoVotoElectronico
 {
     public class Candidato
     {
-        public int Id { get; set; }
+        public Guid IdCandidato { get; set; }
         public string Nombre { get; set; }
-        public string Cargo { get; set; } 
+        public string Apellido { get; set; }
+        public string Propuesta { get; set; }
         public string FotoUrl { get; set; }
 
-        public int ListaPoliticaId { get; set; }
-        public ListaPolitica ListaPolitica { get; set; }
+        // Relación
+        public Guid IdEleccion { get; set; }
+        public Eleccion Eleccion { get; set; }
     }
 }

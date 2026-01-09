@@ -10,8 +10,6 @@ namespace ProyectoVotoElectronico
     {
         public int Id { get; set; }
         public string NombreLista { get; set; } 
-        public string LogoUrl { get; set; }
-
         public int EleccionId { get; set; }
         public Eleccion Eleccion { get; set; }
 
