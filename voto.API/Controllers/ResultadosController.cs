@@ -25,14 +25,14 @@ namespace voto.API.Controllers
         [HttpGet]
         public async Task<ActionResult<IEnumerable<Resultado>>> GetResultado()
         {
-            return await _context.Resultado.ToListAsync();
+            return await _context.Resultados.ToListAsync();
         }
 
         // GET: api/Resultados/5
         [HttpGet("{id}")]
         public async Task<ActionResult<Resultado>> GetResultado(int id)
         {
-            var resultado = await _context.Resultado.FindAsync(id);
+            var resultado = await _context.Resultados.FindAsync(id);
 
             if (resultado == null)
             {
@@ -78,7 +78,7 @@ namespace voto.API.Controllers
         [HttpPost]
         public async Task<ActionResult<Resultado>> PostResultado(Resultado resultado)
         {
-            _context.Resultado.Add(resultado);
+            _context.Resultados.Add(resultado);
             await _context.SaveChangesAsync();
 
             return CreatedAtAction("GetResultado", new { id = resultado.IdResultado }, resultado);
@@ -88,13 +88,13 @@ namespace voto.API.Controllers
         [HttpDelete("{id}")]
         public async Task<IActionResult> DeleteResultado(int id)
         {
-            var resultado = await _context.Resultado.FindAsync(id);
+            var resultado = await _context.Resultados.FindAsync(id);
             if (resultado == null)
             {
                 return NotFound();
             }
 
-            _context.Resultado.Remove(resultado);
+            _context.Resultados.Remove(resultado);
             await _context.SaveChangesAsync();
 
             return NoContent();
@@ -102,7 +102,7 @@ namespace voto.API.Controllers
 
         private bool ResultadoExists(int id)
         {
-            return _context.Resultado.Any(e => e.IdResultado == id);
+            return _context.Resultados.Any(e => e.IdResultado == id);
         }
     }
 }

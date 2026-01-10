@@ -25,14 +25,14 @@ namespace voto.API.Controllers
         [HttpGet]
         public async Task<ActionResult<IEnumerable<Candidato>>> GetCandidato()
         {
-            return await _context.Candidato.ToListAsync();
+            return await _context.Candidatos.ToListAsync();
         }
 
         // GET: api/Candidatoes/5
         [HttpGet("{id}")]
         public async Task<ActionResult<Candidato>> GetCandidato(int id)
         {
-            var candidato = await _context.Candidato.FindAsync(id);
+            var candidato = await _context.Candidatos.FindAsync(id);
 
             if (candidato == null)
             {
@@ -78,7 +78,7 @@ namespace voto.API.Controllers
         [HttpPost]
         public async Task<ActionResult<Candidato>> PostCandidato(Candidato candidato)
         {
-            _context.Candidato.Add(candidato);
+            _context.Candidatos.Add(candidato);
             await _context.SaveChangesAsync();
 
             return CreatedAtAction("GetCandidato", new { id = candidato.IdCandidato }, candidato);
@@ -88,13 +88,13 @@ namespace voto.API.Controllers
         [HttpDelete("{id}")]
         public async Task<IActionResult> DeleteCandidato(int id)
         {
-            var candidato = await _context.Candidato.FindAsync(id);
+            var candidato = await _context.Candidatos.FindAsync(id);
             if (candidato == null)
             {
                 return NotFound();
             }
 
-            _context.Candidato.Remove(candidato);
+            _context.Candidatos.Remove(candidato);
             await _context.SaveChangesAsync();
 
             return NoContent();
@@ -102,7 +102,7 @@ namespace voto.API.Controllers
 
         private bool CandidatoExists(int id)
         {
-            return _context.Candidato.Any(e => e.IdCandidato == id);
+            return _context.Candidatos.Any(e => e.IdCandidato == id);
         }
     }
 }

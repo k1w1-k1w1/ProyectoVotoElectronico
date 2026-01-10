@@ -1,4 +1,5 @@
 ﻿using System.ComponentModel.DataAnnotations;
+using System.ComponentModel.DataAnnotations.Schema;
 
 namespace ProyectoVotoElectronico
 {
@@ -12,9 +13,13 @@ namespace ProyectoVotoElectronico
         public string Password { get; set; }
         public bool Estado { get; set; }
         public DateTime FechaRegistro { get; set; }
+        public string? Codigo2FA { get; set; }
+        public DateTime? CodigoExpira { get; set; }
 
-        // Relaciones
+
         public int IdRol { get; set; }
+
+        [ForeignKey("IdRol")]
         public Rol Rol { get; set; }
 
     }

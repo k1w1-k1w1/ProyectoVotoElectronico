@@ -10,7 +10,8 @@ namespace voto.API
         {
             var builder = WebApplication.CreateBuilder(args);
             builder.Services.AddDbContext<APIContext>(options =>
-                options.UseNpgsql(builder.Configuration.GetConnectionString("APIContext") ?? throw new InvalidOperationException("Connection string 'APIContext' not found.")));
+                options.UseNpgsql(builder.Configuration.GetConnectionString("APIContext") ??
+                throw new InvalidOperationException("Connection string 'APIContext' not found.")));
 
             // Add services to the container.
 

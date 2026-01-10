@@ -1,108 +1,70 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Threading.Tasks;
-using Microsoft.AspNetCore.Http;
-using Microsoft.AspNetCore.Mvc;
+﻿using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using ProyectoVotoElectronico;
 using voto;
+using System.Security.Cryptography;
+using System.Text;
 
-namespace voto.API.Controllers
+[ApiController]
+[Route("api/usuarios")]
+public class UsuariosController : ControllerBase
 {
-    [Route("api/[controller]")]
-    [ApiController]
-    public class UsuariosController : ControllerBase
+    private readonly APIContext _context;
+
+    public UsuariosController(APIContext context)
     {
-        private readonly APIContext _context;
+        _context = context;
+    }
 
-        public UsuariosController(APIContext context)
+    // 🔹 DTO DENTRO DEL CONTROLLER
+    public class RegistroUsuarioDto
+    {
+        public string Cedula { get; set; }
+        public string Nombre { get; set; }
+        public string Apellido { get; set; }
+        public string Email { get; set; }
+        public string Password { get; set; }
+    }
+
+    // 🔹 REGISTRO DE USUARIO
+    [HttpPost("registro")]
+    public async Task<IActionResult> Registrar(RegistroUsuarioDto dto)
+    {
+        // 1️⃣ Validar email único
+        bool existe = await _context.Usuarios
+            .AnyAsync(u => u.Email == dto.Email);
+
+        if (existe)
+            return BadRequest("El correo ya está registrado.");
+
+        // 2️⃣ Obtener rol VOTANTE
+        var rolVotante = await _context.Roles
+            .FirstOrDefaultAsync(r => r.Nombre == "VOTANTE");
+
+        if (rolVotante == null)
+            return BadRequest("No existe el rol VOTANTE.");
+
+        // 3️⃣ Hash de contraseña
+        using var sha = SHA256.Create();
+        var hash = sha.ComputeHash(Encoding.UTF8.GetBytes(dto.Password));
+        string passwordHash = Convert.ToBase64String(hash);
+
+        // 4️⃣ Crear usuario
+        var usuario = new Usuario
         {
-            _context = context;
-        }
+            Cedula = dto.Cedula,
+            Nombre = dto.Nombre,
+            Apellido = dto.Apellido,
+            Email = dto.Email,
+            Password = passwordHash,
+            Estado = true,
+            FechaRegistro = DateTime.UtcNow,
+            IdRol = rolVotante.IdRol
+        };
 
-        // GET: api/Usuarios
-        [HttpGet]
-        public async Task<ActionResult<IEnumerable<Usuario>>> GetUsuario()
-        {
-            return await _context.Usuario.ToListAsync();
-        }
+        _context.Usuarios.Add(usuario);
+        await _context.SaveChangesAsync();
 
-        // GET: api/Usuarios/5
-        [HttpGet("{id}")]
-        public async Task<ActionResult<Usuario>> GetUsuario(int id)
-        {
-            var usuario = await _context.Usuario.FindAsync(id);
-
-            if (usuario == null)
-            {
-                return NotFound();
-            }
-
-            return usuario;
-        }
-
-        // PUT: api/Usuarios/5
-        // To protect from overposting attacks, see https://go.microsoft.com/fwlink/?linkid=2123754
-        [HttpPut("{id}")]
-        public async Task<IActionResult> PutUsuario(int id, Usuario usuario)
-        {
-            if (id != usuario.IdUsuario)
-            {
-                return BadRequest();
-            }
-
-            _context.Entry(usuario).State = EntityState.Modified;
-
-            try
-            {
-                await _context.SaveChangesAsync();
-            }
-            catch (DbUpdateConcurrencyException)
-            {
-                if (!UsuarioExists(id))
-                {
-                    return NotFound();
-                }
-                else
-                {
-                    throw;
-                }
-            }
-
-            return NoContent();
-        }
-
-        // POST: api/Usuarios
-        // To protect from overposting attacks, see https://go.microsoft.com/fwlink/?linkid=2123754
-        [HttpPost]
-        public async Task<ActionResult<Usuario>> PostUsuario(Usuario usuario)
-        {
-            _context.Usuario.Add(usuario);
-            await _context.SaveChangesAsync();
-
-            return CreatedAtAction("GetUsuario", new { id = usuario.IdUsuario }, usuario);
-        }
-
-        // DELETE: api/Usuarios/5
-        [HttpDelete("{id}")]
-        public async Task<IActionResult> DeleteUsuario(int id)
-        {
-            var usuario = await _context.Usuario.FindAsync(id);
-            if (usuario == null)
-            {
-                return NotFound();
-            }
-
-            _context.Usuario.Remove(usuario);
-            await _context.SaveChangesAsync();
-
-            return NoContent();
-        }
-
-        private bool UsuarioExists(int id)
-        {
-            return _context.Usuario.Any(e => e.IdUsuario == id);
-        }
+        return Ok("Usuario registrado correctamente.");
     }
 }

@@ -25,14 +25,14 @@ namespace voto.API.Controllers
         [HttpGet]
         public async Task<ActionResult<IEnumerable<Eleccion>>> GetEleccion()
         {
-            return await _context.Eleccion.ToListAsync();
+            return await _context.Elecciones.ToListAsync();
         }
 
         // GET: api/Elecciones/5
         [HttpGet("{id}")]
         public async Task<ActionResult<Eleccion>> GetEleccion(int id)
         {
-            var eleccion = await _context.Eleccion.FindAsync(id);
+            var eleccion = await _context.Elecciones.FindAsync(id);
 
             if (eleccion == null)
             {
@@ -78,7 +78,7 @@ namespace voto.API.Controllers
         [HttpPost]
         public async Task<ActionResult<Eleccion>> PostEleccion(Eleccion eleccion)
         {
-            _context.Eleccion.Add(eleccion);
+            _context.Elecciones.Add(eleccion);
             await _context.SaveChangesAsync();
 
             return CreatedAtAction("GetEleccion", new { id = eleccion.IdEleccion }, eleccion);
@@ -88,13 +88,13 @@ namespace voto.API.Controllers
         [HttpDelete("{id}")]
         public async Task<IActionResult> DeleteEleccion(int id)
         {
-            var eleccion = await _context.Eleccion.FindAsync(id);
+            var eleccion = await _context.Elecciones.FindAsync(id);
             if (eleccion == null)
             {
                 return NotFound();
             }
 
-            _context.Eleccion.Remove(eleccion);
+            _context.Elecciones.Remove(eleccion);
             await _context.SaveChangesAsync();
 
             return NoContent();
@@ -102,7 +102,7 @@ namespace voto.API.Controllers
 
         private bool EleccionExists(int id)
         {
-            return _context.Eleccion.Any(e => e.IdEleccion == id);
+            return _context.Elecciones.Any(e => e.IdEleccion == id);
         }
     }
 }
