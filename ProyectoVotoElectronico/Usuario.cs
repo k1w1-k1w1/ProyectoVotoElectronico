@@ -1,8 +1,10 @@
-﻿namespace ProyectoVotoElectronico
+﻿using System.ComponentModel.DataAnnotations;
+
+namespace ProyectoVotoElectronico
 {
     public class Usuario
     {
-        public Guid IdUsuario { get; set; }
+        [Key]public int IdUsuario { get; set; }
         public string Cedula { get; set; }
         public string Nombre { get; set; }
         public string Apellido { get; set; }
