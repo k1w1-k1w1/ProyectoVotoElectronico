@@ -9,6 +9,9 @@ namespace voto.API
         public static void Main(string[] args)
         {
             var builder = WebApplication.CreateBuilder(args);
+
+            builder.Services.AddScoped<EmailService>();
+
             builder.Services.AddDbContext<APIContext>(options =>
                 options.UseNpgsql(builder.Configuration.GetConnectionString("APIContext") ??
                 throw new InvalidOperationException("Connection string 'APIContext' not found.")));
