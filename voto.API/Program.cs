@@ -36,7 +36,6 @@ namespace voto.API
 
             app.UseAuthorization();
 
-
             app.MapControllers();
 
             app.Run();

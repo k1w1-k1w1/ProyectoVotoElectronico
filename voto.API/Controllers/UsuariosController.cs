@@ -108,7 +108,7 @@ public class UsuariosController : ControllerBase
         return Ok("Código de verificación enviado al correo.");
     }
 
-    // VERIFICAR 2FA (FASE 2)
+    // VERIFICAR 2FA
 
     [HttpPost("verificar-2fa")]
     public async Task<IActionResult> Verificar2FA(Verify2FADTO dto)
@@ -131,7 +131,7 @@ public class UsuariosController : ControllerBase
         usuario.CodigoExpira = null;
         await _context.SaveChangesAsync();
 
-        // Aquí luego generamos JWT
+        //JWT
         return Ok(new
         {
             mensaje = "Login exitoso",
