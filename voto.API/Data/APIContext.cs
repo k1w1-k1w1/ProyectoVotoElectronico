@@ -1,10 +1,11 @@
-﻿using System;
+﻿using Microsoft.EntityFrameworkCore;
+using ProyectoVotoElectronico;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
-using Microsoft.EntityFrameworkCore;
-using ProyectoVotoElectronico;
 using voto;
+using VotoElectronico.Api.Models;
 
 
 namespace voto
@@ -24,5 +25,7 @@ namespace voto
         public DbSet<ProyectoVotoElectronico.Resultado> Resultados { get; set; } = default!;
         public DbSet<ProyectoVotoElectronico.ListaPolitica> ListasPoliticas { get; set; } = default!;
         public DbSet<RegistroVotacion> RegistroVotaciones { get; set; } = default!;
+        public DbSet<Votante> Votantes { get; set; }
+
     }
 }

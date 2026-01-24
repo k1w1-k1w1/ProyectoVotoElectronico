@@ -11,14 +11,15 @@ using System.Text.Encodings.Web;
 using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Authentication;
-using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Identity.UI.Services;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
 using Microsoft.AspNetCore.WebUtilities;
 using Microsoft.Extensions.Logging;
+using System.Net.Http.Json;
 using VotoElectronico.Seguro.Models;
+using VotoElectronico.Seguro.Models.Dto;
 
 namespace VotoElectronico.Seguro.Areas.Identity.Pages.Account
 {
@@ -30,13 +31,15 @@ namespace VotoElectronico.Seguro.Areas.Identity.Pages.Account
         private readonly IUserEmailStore<ApplicationUser> _emailStore;
         private readonly ILogger<RegisterModel> _logger;
         private readonly IEmailSender _emailSender;
+        private readonly IHttpClientFactory _httpClientFactory;
 
         public RegisterModel(
             UserManager<ApplicationUser> userManager,
             IUserStore<ApplicationUser> userStore,
             SignInManager<ApplicationUser> signInManager,
             ILogger<RegisterModel> logger,
-            IEmailSender emailSender)
+            IEmailSender emailSender,
+            IHttpClientFactory httpClientFactory)
         {
             _userManager = userManager;
             _userStore = userStore;
@@ -44,75 +47,47 @@ namespace VotoElectronico.Seguro.Areas.Identity.Pages.Account
             _signInManager = signInManager;
             _logger = logger;
             _emailSender = emailSender;
+            _httpClientFactory = httpClientFactory;
         }
 
-        /// <summary>
-        ///     This API supports the ASP.NET Core Identity default UI infrastructure and is not intended to be used
-        ///     directly from your code. This API may change or be removed in future releases.
-        /// </summary>
         [BindProperty]
         public InputModel Input { get; set; }
 
-        /// <summary>
-        ///     This API supports the ASP.NET Core Identity default UI infrastructure and is not intended to be used
-        ///     directly from your code. This API may change or be removed in future releases.
-        /// </summary>
         public string ReturnUrl { get; set; }
 
-        /// <summary>
-        ///     This API supports the ASP.NET Core Identity default UI infrastructure and is not intended to be used
-        ///     directly from your code. This API may change or be removed in future releases.
-        /// </summary>
         public IList<AuthenticationScheme> ExternalLogins { get; set; }
 
-        /// <summary>
-        ///     This API supports the ASP.NET Core Identity default UI infrastructure and is not intended to be used
-        ///     directly from your code. This API may change or be removed in future releases.
-        /// </summary>
         public class InputModel
         {
             [Required]
-            [Display(Name = "Cédula")]
             public string Cedula { get; set; }
 
             [Required]
-            [Display(Name = "Nombre")]
             public string Nombre { get; set; }
 
             [Required]
-            [Display(Name = "Apellido")]
             public string Apellido { get; set; }
 
-            [Required]
-            [EmailAddress]
-            [Display(Name = "Email")]
+            [Required, EmailAddress]
             public string Email { get; set; }
 
             [Required]
-            [Display(Name = "Teléfono")]
             public string Telefono { get; set; }
 
-            [Required]
-            [Range(16, 120, ErrorMessage = "Edad inválida")]
-            [Display(Name = "Edad")]
+            [Required, Range(16, 120)]
             public int Edad { get; set; }
 
             [Required]
-            [Display(Name = "Ciudad")]
             public string Ciudad { get; set; }
 
-            [Required]
-            [StringLength(100, ErrorMessage = "The {0} must be at least {2} and at max {1} characters long.", MinimumLength = 6)]
+            [Required, StringLength(100, MinimumLength = 6)]
             [DataType(DataType.Password)]
-            [Display(Name = "Password")]
             public string Password { get; set; }
 
             [DataType(DataType.Password)]
-            [Display(Name = "Confirm password")]
-            [Compare("Password", ErrorMessage = "The password and confirmation password do not match.")]
+            [Compare("Password")]
             public string ConfirmPassword { get; set; }
         }
-
 
         public async Task OnGetAsync(string returnUrl = null)
         {
@@ -124,79 +99,73 @@ namespace VotoElectronico.Seguro.Areas.Identity.Pages.Account
         {
             returnUrl ??= Url.Content("~/");
             ExternalLogins = (await _signInManager.GetExternalAuthenticationSchemesAsync()).ToList();
-            if (ModelState.IsValid)
+
+            if (!ModelState.IsValid)
+                return Page();
+
+            // 1️⃣ Crear usuario Identity
+            var user = CreateUser();
+
+            user.Cedula = Input.Cedula;
+            user.Nombre = Input.Nombre;
+            user.Apellido = Input.Apellido;
+            user.Edad = Input.Edad;
+            user.Ciudad = Input.Ciudad;
+            user.PhoneNumber = Input.Telefono;
+
+            await _userStore.SetUserNameAsync(user, Input.Email, CancellationToken.None);
+            await _emailStore.SetEmailAsync(user, Input.Email, CancellationToken.None);
+
+            var result = await _userManager.CreateAsync(user, Input.Password);
+
+            if (!result.Succeeded)
             {
-                var user = CreateUser();
-
-                user.Cedula = Input.Cedula;
-                user.Nombre = Input.Nombre;
-                user.Apellido = Input.Apellido;
-
-                user.PhoneNumber = Input.Telefono;
-                user.Edad = Input.Edad;
-                user.Ciudad = Input.Ciudad;
-
-
-                await _userStore.SetUserNameAsync(user, Input.Email, CancellationToken.None);
-                await _emailStore.SetEmailAsync(user, Input.Email, CancellationToken.None);
-                var result = await _userManager.CreateAsync(user, Input.Password);
-
-                if (result.Succeeded)
-                {
-                    _logger.LogInformation("User created a new account with password.");
-
-                    var userId = await _userManager.GetUserIdAsync(user);
-                    var code = await _userManager.GenerateEmailConfirmationTokenAsync(user);
-                    code = WebEncoders.Base64UrlEncode(Encoding.UTF8.GetBytes(code));
-                    var callbackUrl = Url.Page(
-                        "/Account/ConfirmEmail",
-                        pageHandler: null,
-                        values: new { area = "Identity", userId = userId, code = code, returnUrl = returnUrl },
-                        protocol: Request.Scheme);
-
-                    await _emailSender.SendEmailAsync(Input.Email, "Confirm your email",
-                        $"Please confirm your account by <a href='{HtmlEncoder.Default.Encode(callbackUrl)}'>clicking here</a>.");
-
-                    if (_userManager.Options.SignIn.RequireConfirmedAccount)
-                    {
-                        return RedirectToPage("RegisterConfirmation", new { email = Input.Email, returnUrl = returnUrl });
-                    }
-                    else
-                    {
-                        await _signInManager.SignInAsync(user, isPersistent: false);
-                        return LocalRedirect(returnUrl);
-                    }
-                }
                 foreach (var error in result.Errors)
-                {
                     ModelState.AddModelError(string.Empty, error.Description);
-                }
+
+                return Page();
             }
 
-            // If we got this far, something failed, redisplay form
-            return Page();
+            // 2️⃣ Registrar votante en la API
+            var client = _httpClientFactory.CreateClient("ApiVoto");
+
+            var votanteDto = new VotanteCreateDto
+            {
+                IdentityUserId = user.Id,
+                Cedula = Input.Cedula,
+                Nombre = Input.Nombre,
+                Apellido = Input.Apellido,
+                Edad = Input.Edad,
+                Ciudad = Input.Ciudad,
+                Email = Input.Email
+            };
+
+            var response = await client.PostAsJsonAsync("api/votantes", votanteDto);
+
+            if (!response.IsSuccessStatusCode)
+            {
+                // rollback
+                await _userManager.DeleteAsync(user);
+
+                ModelState.AddModelError("", "Error al registrar el votante en la API.");
+                return Page();
+            }
+
+            // 3️⃣ Login
+            await _signInManager.SignInAsync(user, isPersistent: false);
+            return LocalRedirect(returnUrl);
         }
 
         private ApplicationUser CreateUser()
         {
-            try
-            {
-                return Activator.CreateInstance<ApplicationUser>();
-            }
-            catch
-            {
-                throw new InvalidOperationException($"Can't create an instance of '{nameof(ApplicationUser)}'. " +
-                    $"Ensure that '{nameof(ApplicationUser)}' is not an abstract class and has a parameterless constructor, or alternatively " +
-                    $"override the register page in /Areas/Identity/Pages/Account/Register.cshtml");
-            }
+            return Activator.CreateInstance<ApplicationUser>();
         }
 
         private IUserEmailStore<ApplicationUser> GetEmailStore()
         {
             if (!_userManager.SupportsUserEmail)
-            {
-                throw new NotSupportedException("The default UI requires a user store with email support.");
-            }
+                throw new NotSupportedException("Email no soportado.");
+
             return (IUserEmailStore<ApplicationUser>)_userStore;
         }
     }

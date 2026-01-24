@@ -1,4 +1,5 @@
-﻿using Microsoft.AspNetCore.Mvc;
+﻿using ProyectoVotoElectronico.DTOs;
+using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using System.Collections.Generic;
 using System.Linq;
@@ -9,7 +10,7 @@ namespace voto.API.Controllers
 {
     [ApiController]
     [Route("api/[controller]")]
-    // [Authorize(Roles = "Administrador")] 
+    // [Authorize(Roles = "Administrador")]
     public class UsuariosController : ControllerBase
     {
         private readonly APIContext _context;
@@ -24,7 +25,7 @@ namespace voto.API.Controllers
         public async Task<ActionResult<IEnumerable<Usuario>>> GetUsuarios()
         {
             return await _context.Usuarios
-                .Include(u => u.Rol) 
+                .Include(u => u.Rol)
                 .AsNoTracking()
                 .ToListAsync();
         }
@@ -37,56 +38,89 @@ namespace voto.API.Controllers
                 .Include(u => u.Rol)
                 .FirstOrDefaultAsync(u => u.IdUsuario == id);
 
-            if (usuario == null) return NotFound();
+            if (usuario == null)
+                return NotFound();
 
             return usuario;
         }
 
+        // GET: api/Usuarios/ByEmail/test@mail.com
+
+        [HttpGet("ByEmail/{email}")]
+        public async Task<IActionResult> GetByEmail(string email)
+        {
+            var usuario = await _context.Usuarios
+                .Include(u => u.Rol)
+                .FirstOrDefaultAsync(u => u.Email == email);
+
+            if (usuario == null)
+                return NotFound();
+
+            return Ok(usuario);
+        }
+
+
         // POST: api/Usuarios
         [HttpPost]
-        public async Task<ActionResult<Usuario>> PostUsuario(Usuario usuario)
+        public async Task<ActionResult<Usuario>> PostUsuario(UsuarioCreateDto dto)
         {
-            if (await _context.Usuarios.AnyAsync(u => u.Cedula == usuario.Cedula))
+            var usuario = new Usuario
             {
-                return BadRequest("La cédula ya se encuentra registrada.");
-            }
-
-            var rolExiste = await _context.Roles.AnyAsync(r => r.IdRol == usuario.IdRol);
-            if (!rolExiste) return BadRequest("El rol especificado no existe.");
-
-            usuario.FechaRegistro = DateTime.UtcNow;
-            usuario.Estado = true;
+                Nombre = dto.Nombre,
+                Apellido = dto.Apellido,
+                Email = dto.Email,
+                IdRol = dto.IdRol,
+                Estado = dto.Estado,
+                FechaRegistro = System.DateTime.Now
+            };
 
             _context.Usuarios.Add(usuario);
             await _context.SaveChangesAsync();
 
-            return CreatedAtAction(nameof(GetUsuario), new { id = usuario.IdUsuario }, usuario);
+            return CreatedAtAction(
+                nameof(GetUsuario),
+                new { id = usuario.IdUsuario },
+                usuario
+            );
         }
 
+ 
         // PUT: api/Usuarios/5
+
         [HttpPut("{id}")]
-        public async Task<IActionResult> PutUsuario(int id, Usuario usuario)
+        public async Task<IActionResult> PutUsuario(int id, UsuarioUpdateDto dto)
         {
-            if (id != usuario.IdUsuario) return BadRequest();
+            if (id != dto.IdUsuario)
+                return BadRequest("El id no coincide.");
 
-            _context.Entry(usuario).State = EntityState.Modified;
+            var usuario = await _context.Usuarios.FindAsync(id);
+            if (usuario == null)
+                return NotFound();
 
-            try
-            {
-                await _context.SaveChangesAsync();
-            }
-            catch (DbUpdateConcurrencyException)
-            {
-                if (!UsuarioExists(id)) return NotFound();
-                else throw;
-            }
+            usuario.Nombre = dto.Nombre;
+            usuario.Apellido = dto.Apellido;
+            usuario.Email = dto.Email;
+            usuario.IdRol = dto.IdRol;
+            usuario.Estado = dto.Estado;
+
+            await _context.SaveChangesAsync();
 
             return NoContent();
         }
 
-        private bool UsuarioExists(int id)
+        // DELETE: api/Usuarios/5
+
+        [HttpDelete("{id}")]
+        public async Task<IActionResult> DeleteUsuario(int id)
         {
-            return _context.Usuarios.Any(e => e.IdUsuario == id);
+            var usuario = await _context.Usuarios.FindAsync(id);
+            if (usuario == null)
+                return NotFound();
+
+            usuario.Estado = false;
+            await _context.SaveChangesAsync();
+
+            return NoContent();
         }
     }
 }

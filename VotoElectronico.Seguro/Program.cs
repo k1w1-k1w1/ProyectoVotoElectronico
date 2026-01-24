@@ -30,6 +30,11 @@ namespace VotoElectronico.Seguro
                 .AddDefaultTokenProviders();
             builder.Services.AddControllersWithViews();
 
+            builder.Services.AddHttpClient("ApiVoto", client =>
+            {
+                client.BaseAddress = new Uri("http://localhost:5294/"); // PUERTO DE TU API
+            });
+
             var app = builder.Build();
 
             // Configure the HTTP request pipeline.

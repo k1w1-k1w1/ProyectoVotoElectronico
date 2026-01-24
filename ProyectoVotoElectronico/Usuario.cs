@@ -6,6 +6,7 @@ namespace ProyectoVotoElectronico
     public class Usuario
     {
         [Key]public int IdUsuario { get; set; }
+        public string IdentityUserId { get; set; }
         public string Cedula { get; set; }
         public string Nombre { get; set; }
         public string Apellido { get; set; }
