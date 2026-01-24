@@ -1,78 +1,93 @@
 ﻿using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
-using voto;
+using System;
+using System.Linq;
+using System.Security.Cryptography;
+using System.Text;
+using System.Threading.Tasks;
 using ProyectoVotoElectronico;
 
-[ApiController]
-[Route("api/votos")]
-public class VotosController : ControllerBase
+namespace voto.API.Controllers
 {
-    private readonly APIContext _context;
-
-    public VotosController(APIContext context)
+    [ApiController]
+    [Route("api/[controller]")]
+    public class VotosController : ControllerBase
     {
-        _context = context;
+        private readonly APIContext _context;
+
+        public VotosController(APIContext context)
+        {
+            _context = context;
+        }
+
+        // POST: api/Votos/EmitirVoto
+        [HttpPost("EmitirVoto")]
+        public async Task<IActionResult> EmitirVoto(VotoRequest request)
+        {
+            var eleccion = await _context.Elecciones.FindAsync(request.IdEleccion);
+            if (eleccion == null || eleccion.Estado != "ABIERTA")
+                return BadRequest("La elección no está activa.");
+
+            var yaVoto = await _context.RegistroVotaciones
+                .AnyAsync(r => r.IdUsuario == request.IdUsuario && r.IdEleccion == request.IdEleccion);
+
+            if (yaVoto) return BadRequest("El usuario ya ejerció su voto en esta elección.");
+
+            using var transaction = await _context.Database.BeginTransactionAsync();
+            try
+            {
+                var registro = new RegistroVotacion
+                {
+                    IdUsuario = request.IdUsuario,
+                    IdEleccion = request.IdEleccion,
+                    FechaHora = DateTime.UtcNow
+                };
+                _context.RegistroVotaciones.Add(registro);
+
+                // Crear el Voto Anónimo con Hash de Inmutabilidad
+                string semilla = $"{request.IdEleccion}-{request.IdCandidato ?? request.IdLista}-{Guid.NewGuid()}";
+                string hashInmutable = CalcularHash(semilla);
+
+                var nuevoVoto = new Voto
+                {
+                    IdEleccion = request.IdEleccion,
+                    IdCandidato = request.IdCandidato,
+                    IdLista = request.IdLista,
+                    FechaHora = DateTime.UtcNow,
+                    HashVoto = hashInmutable // Requisito de seguridad
+                };
+                _context.Votos.Add(nuevoVoto);
+
+                await _context.SaveChangesAsync();
+                await transaction.CommitAsync();
+
+                return Ok(new { mensaje = "Voto procesado con éxito", comprobante = hashInmutable });
+            }
+            catch (Exception ex)
+            {
+                await transaction.RollbackAsync();
+                var mensajeError = ex.InnerException?.Message ?? ex.Message;
+                return StatusCode(500, $"Error real: {mensajeError}");
+            }
+        }
+
+        private string CalcularHash(string texto)
+        {
+            using (SHA256 sha256 = SHA256.Create())
+            {
+                byte[] bytes = sha256.ComputeHash(Encoding.UTF8.GetBytes(texto));
+                StringBuilder builder = new StringBuilder();
+                foreach (byte b in bytes) builder.Append(b.ToString("x2"));
+                return builder.ToString();
+            }
+        }
     }
 
-    // DTO para emitir voto
-    public class VotoRequestDto
+    public class VotoRequest
     {
         public int IdUsuario { get; set; }
         public int IdEleccion { get; set; }
-        public int IdCandidato { get; set; }
-    }
-
-    [HttpPost]
-    public async Task<IActionResult> EmitirVoto([FromBody] VotoRequestDto dto)
-    {
-        // 1️⃣ Verificar elección
-        var eleccion = await _context.Elecciones
-            .FirstOrDefaultAsync(e => e.IdEleccion == dto.IdEleccion);
-
-        if (eleccion == null)
-            return BadRequest("La elección no existe.");
-
-        if (eleccion.Estado != "ABIERTA")
-            return BadRequest("La elección no está abierta.");
-
-        // 2️⃣ Verificar si el usuario ya votó
-        bool yaVoto = await _context.Set<RegistroVotacion>()
-            .AnyAsync(r => r.IdUsuario == dto.IdUsuario
-                        && r.IdEleccion == dto.IdEleccion);
-
-        if (yaVoto)
-            return BadRequest("El usuario ya ha votado en esta elección.");
-
-        // 3️⃣ Verificar candidato
-        var candidato = await _context.Candidatos
-            .FirstOrDefaultAsync(c => c.IdCandidato == dto.IdCandidato
-                                   && c.IdEleccion == dto.IdEleccion);
-
-        if (candidato == null)
-            return BadRequest("El candidato no pertenece a esta elección.");
-
-        // 4️⃣ Crear voto (ANÓNIMO)
-        var voto = new Voto
-        {
-            IdEleccion = dto.IdEleccion,
-            IdCandidato = dto.IdCandidato,
-            FechaHora = DateTime.UtcNow,
-            HashVoto = Guid.NewGuid().ToString() // hash ≠ usuario
-        };
-
-        // 5️⃣ Registrar auditoría (NO anónimo)
-        var registro = new RegistroVotacion
-        {
-            IdUsuario = dto.IdUsuario,
-            IdEleccion = dto.IdEleccion,
-            FechaHora = DateTime.UtcNow
-        };
-
-        _context.Votos.Add(voto);
-        _context.Set<RegistroVotacion>().Add(registro);
-
-        await _context.SaveChangesAsync();
-
-        return Ok("Voto registrado correctamente.");
+        public int? IdCandidato { get; set; } 
+        public int? IdLista { get; set; }    
     }
 }

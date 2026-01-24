@@ -1,49 +1,79 @@
 ﻿using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
-using voto;
+using System.Collections.Generic;
+using System.Linq;
+using System.Threading.Tasks;
 using ProyectoVotoElectronico;
 
-[ApiController]
-[Route("api/roles")]
-public class RolesController : ControllerBase
+namespace voto.API.Controllers
 {
-    private readonly APIContext _context;
-
-    public RolesController(APIContext context)
+    [ApiController]
+    [Route("api/[controller]")]
+    // [Authorize(Roles = "Administrador")] 
+    public class RolesController : ControllerBase
     {
-        _context = context;
-    }
+        private readonly APIContext _context;
 
-    [HttpPost("crear-iniciales")]
-    public async Task<IActionResult> CrearRolesIniciales()
-    {
-        bool existen = await _context.Roles.AnyAsync();
-
-        if (existen)
-            return BadRequest("Los roles ya fueron creados.");
-
-        var roles = new List<Rol>
-    {
-        new Rol
+        public RolesController(APIContext context)
         {
-            Nombre = "ADMIN",
-            Descripcion = "Administrador del sistema"
-        },
-        new Rol
-        {
-            Nombre = "VOTANTE",
-            Descripcion = "Usuario habilitado para votar"
-        },
-        new Rol
-        {
-            Nombre = "CANDIDATO",
-            Descripcion = "Candidato participante en la elección"
+            _context = context;
         }
-    };
 
-        _context.Roles.AddRange(roles);
-        await _context.SaveChangesAsync();
+        // GET: api/Roles
+        [HttpGet]
+        public async Task<ActionResult<IEnumerable<Rol>>> GetRoles()
+        {
+            return await _context.Roles.ToListAsync();
+        }
 
-        return Ok("Roles ADMIN, VOTANTE y CANDIDATO creados correctamente.");
+        // GET: api/Roles/5
+        [HttpGet("{id}")]
+        public async Task<ActionResult<Rol>> GetRol(int id)
+        {
+            var rol = await _context.Roles.FindAsync(id);
+
+            if (rol == null) return NotFound();
+
+            return rol;
+        }
+
+        // POST: api/Roles
+        [HttpPost]
+        public async Task<ActionResult<Rol>> PostRol(Rol rol)
+        {
+            if (await _context.Roles.AnyAsync(r => r.Nombre == rol.Nombre))
+            {
+                return BadRequest("El nombre del rol ya existe.");
+            }
+
+            _context.Roles.Add(rol);
+            await _context.SaveChangesAsync();
+
+            return CreatedAtAction(nameof(GetRol), new { id = rol.IdRol }, rol);
+        }
+
+        // DELETE: api/Roles/5
+        [HttpDelete("{id}")]
+        public async Task<IActionResult> DeleteRol(int id)
+        {
+            var rol = await _context.Roles.FindAsync(id);
+            if (rol == null) return NotFound();
+
+            var tieneUsuarios = await _context.Usuarios.AnyAsync(u => u.IdRol == id);
+            if (tieneUsuarios)
+            {
+                return BadRequest("No se puede eliminar un rol que tiene usuarios asociados.");
+            }
+
+            _context.Roles.Remove(rol);
+            await _context.SaveChangesAsync();
+
+            return NoContent();
+        }
+
+        private bool RolExists(int id)
+        {
+            return _context.Roles.Any(e => e.IdRol == id);
+        }
     }
 }

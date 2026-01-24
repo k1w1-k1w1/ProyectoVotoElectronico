@@ -1,17 +1,15 @@
-﻿using System;
+﻿using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
-using Microsoft.AspNetCore.Http;
-using Microsoft.AspNetCore.Mvc;
-using Microsoft.EntityFrameworkCore;
 using ProyectoVotoElectronico;
-using voto;
 
 namespace voto.API.Controllers
 {
-    [Route("api/[controller]")]
     [ApiController]
+    [Route("api/[controller]")]
     public class ResultadosController : ControllerBase
     {
         private readonly APIContext _context;
@@ -21,88 +19,68 @@ namespace voto.API.Controllers
             _context = context;
         }
 
-        // GET: api/Resultados
-        [HttpGet]
-        public async Task<ActionResult<IEnumerable<Resultado>>> GetResultado()
+        // GET: api/Resultados/Reporte/5
+        [HttpGet("Reporte/{idEleccion}")]
+        public async Task<IActionResult> GetReporteFinal(int idEleccion)
         {
-            return await _context.Resultados.ToListAsync();
+            var eleccion = await _context.Elecciones
+                .FirstOrDefaultAsync(e => e.IdEleccion == idEleccion);
+
+            if (eleccion == null) return NotFound("Elección no encontrada.");
+
+            var votosCandidatos = await _context.Votos
+                .Where(v => v.IdEleccion == idEleccion && v.IdCandidato != null)
+                .GroupBy(v => v.IdCandidato)
+                .Select(g => new {
+                    Id = g.Key,
+                    TotalVotos = g.Count()
+                }).ToListAsync();
+
+            var votosListas = await _context.Votos
+                .Where(v => v.IdEleccion == idEleccion && v.IdLista != null)
+                .GroupBy(v => v.IdLista)
+                .Select(g => new {
+                    Id = g.Key,
+                    TotalVotos = g.Count()
+                }).ToListAsync();
+
+            return Ok(new
+            {
+                eleccion = eleccion.Nombre,
+                estado = eleccion.Estado,
+                votosPorCandidato = votosCandidatos,
+                votosPorLista = votosListas,
+                fechaReporte = DateTime.UtcNow
+            });
         }
 
-        // GET: api/Resultados/5
-        [HttpGet("{id}")]
-        public async Task<ActionResult<Resultado>> GetResultado(int id)
+        // POST: api/Resultados/CerrarEleccion/5
+        [HttpPost("CerrarEleccion/{idEleccion}")]
+        public async Task<IActionResult> FinalizarProceso(int idEleccion)
         {
-            var resultado = await _context.Resultados.FindAsync(id);
+            var eleccion = await _context.Elecciones.FindAsync(idEleccion);
+            if (eleccion == null) return NotFound();
 
-            if (resultado == null)
+            if (eleccion.Estado != "ABIERTA")
+                return BadRequest("Solo se pueden cerrar elecciones que estén en curso.");
+
+            eleccion.Estado = "CERRADA";
+            eleccion.FechaFin = DateTime.UtcNow;
+
+            var totalVotos = await _context.Votos.CountAsync(v => v.IdEleccion == idEleccion);
+
+            var resultado = new Resultado
             {
-                return NotFound();
-            }
+                IdEleccion = idEleccion,
+                TotalVotos = totalVotos,
+                MetodoAsignacion = eleccion.Tipo, 
+                FechaCalculo = DateTime.UtcNow
+            };
 
-            return resultado;
-        }
-
-        // PUT: api/Resultados/5
-        // To protect from overposting attacks, see https://go.microsoft.com/fwlink/?linkid=2123754
-        [HttpPut("{id}")]
-        public async Task<IActionResult> PutResultado(int id, Resultado resultado)
-        {
-            if (id != resultado.IdResultado)
-            {
-                return BadRequest();
-            }
-
-            _context.Entry(resultado).State = EntityState.Modified;
-
-            try
-            {
-                await _context.SaveChangesAsync();
-            }
-            catch (DbUpdateConcurrencyException)
-            {
-                if (!ResultadoExists(id))
-                {
-                    return NotFound();
-                }
-                else
-                {
-                    throw;
-                }
-            }
-
-            return NoContent();
-        }
-
-        // POST: api/Resultados
-        // To protect from overposting attacks, see https://go.microsoft.com/fwlink/?linkid=2123754
-        [HttpPost]
-        public async Task<ActionResult<Resultado>> PostResultado(Resultado resultado)
-        {
             _context.Resultados.Add(resultado);
             await _context.SaveChangesAsync();
 
-            return CreatedAtAction("GetResultado", new { id = resultado.IdResultado }, resultado);
-        }
-
-        // DELETE: api/Resultados/5
-        [HttpDelete("{id}")]
-        public async Task<IActionResult> DeleteResultado(int id)
-        {
-            var resultado = await _context.Resultados.FindAsync(id);
-            if (resultado == null)
-            {
-                return NotFound();
-            }
-
-            _context.Resultados.Remove(resultado);
-            await _context.SaveChangesAsync();
-
-            return NoContent();
-        }
-
-        private bool ResultadoExists(int id)
-        {
-            return _context.Resultados.Any(e => e.IdResultado == id);
+            return Ok(new { mensaje = "Elección cerrada y resultados procesados.", resultado });
         }
     }
 }

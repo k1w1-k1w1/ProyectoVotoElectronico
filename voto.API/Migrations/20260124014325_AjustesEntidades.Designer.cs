@@ -2,6 +2,7 @@
 using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 using voto;
@@ -11,9 +12,11 @@ using voto;
 namespace voto.API.Migrations
 {
     [DbContext(typeof(APIContext))]
-    partial class APIContextModelSnapshot : ModelSnapshot
+    [Migration("20260124014325_AjustesEntidades")]
+    partial class AjustesEntidades
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -31,12 +34,14 @@ namespace voto.API.Migrations
                     NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("IdCandidato"));
 
                     b.Property<string>("Apellido")
+                        .IsRequired()
                         .HasColumnType("text");
 
-                    b.Property<int?>("EleccionIdEleccion")
+                    b.Property<int>("EleccionIdEleccion")
                         .HasColumnType("integer");
 
                     b.Property<string>("FotoUrl")
+                        .IsRequired()
                         .HasColumnType("text");
 
                     b.Property<int>("IdEleccion")
@@ -46,9 +51,11 @@ namespace voto.API.Migrations
                         .HasColumnType("integer");
 
                     b.Property<string>("Nombre")
+                        .IsRequired()
                         .HasColumnType("text");
 
                     b.Property<string>("Propuesta")
+                        .IsRequired()
                         .HasColumnType("text");
 
                     b.HasKey("IdCandidato");
@@ -69,21 +76,25 @@ namespace voto.API.Migrations
                     NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("IdEleccion"));
 
                     b.Property<string>("Descripcion")
+                        .IsRequired()
                         .HasColumnType("text");
 
                     b.Property<string>("Estado")
+                        .IsRequired()
                         .HasColumnType("text");
 
                     b.Property<DateTime>("FechaFin")
-                        .HasColumnType("timestamp without time zone");
+                        .HasColumnType("timestamp with time zone");
 
                     b.Property<DateTime>("FechaInicio")
-                        .HasColumnType("timestamp without time zone");
+                        .HasColumnType("timestamp with time zone");
 
                     b.Property<string>("Nombre")
+                        .IsRequired()
                         .HasColumnType("text");
 
                     b.Property<string>("Tipo")
+                        .IsRequired()
                         .HasColumnType("text");
 
                     b.HasKey("IdEleccion");
@@ -103,6 +114,7 @@ namespace voto.API.Migrations
                         .HasColumnType("integer");
 
                     b.Property<string>("NombreLista")
+                        .IsRequired()
                         .HasColumnType("text");
 
                     b.HasKey("Idlista");
@@ -120,8 +132,11 @@ namespace voto.API.Migrations
 
                     NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("IdRegistro"));
 
+                    b.Property<int>("EleccionIdEleccion")
+                        .HasColumnType("integer");
+
                     b.Property<DateTime>("FechaHora")
-                        .HasColumnType("timestamp without time zone");
+                        .HasColumnType("timestamp with time zone");
 
                     b.Property<int>("IdEleccion")
                         .HasColumnType("integer");
@@ -129,11 +144,14 @@ namespace voto.API.Migrations
                     b.Property<int>("IdUsuario")
                         .HasColumnType("integer");
 
+                    b.Property<int>("UsuarioIdUsuario")
+                        .HasColumnType("integer");
+
                     b.HasKey("IdRegistro");
 
-                    b.HasIndex("IdEleccion");
+                    b.HasIndex("EleccionIdEleccion");
 
-                    b.HasIndex("IdUsuario");
+                    b.HasIndex("UsuarioIdUsuario");
 
                     b.ToTable("RegistroVotaciones");
                 });
@@ -146,16 +164,17 @@ namespace voto.API.Migrations
 
                     NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("IdResultado"));
 
-                    b.Property<int?>("EleccionIdEleccion")
+                    b.Property<int>("EleccionIdEleccion")
                         .HasColumnType("integer");
 
                     b.Property<DateTime>("FechaCalculo")
-                        .HasColumnType("timestamp without time zone");
+                        .HasColumnType("timestamp with time zone");
 
                     b.Property<int>("IdEleccion")
                         .HasColumnType("integer");
 
                     b.Property<string>("MetodoAsignacion")
+                        .IsRequired()
                         .HasColumnType("text");
 
                     b.Property<int>("TotalVotos")
@@ -177,9 +196,11 @@ namespace voto.API.Migrations
                     NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("IdRol"));
 
                     b.Property<string>("Descripcion")
+                        .IsRequired()
                         .HasColumnType("text");
 
                     b.Property<string>("Nombre")
+                        .IsRequired()
                         .HasColumnType("text");
 
                     b.HasKey("IdRol");
@@ -196,24 +217,28 @@ namespace voto.API.Migrations
                     NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("IdUsuario"));
 
                     b.Property<string>("Apellido")
+                        .IsRequired()
                         .HasColumnType("text");
 
                     b.Property<string>("Cedula")
+                        .IsRequired()
                         .HasColumnType("text");
 
                     b.Property<string>("Email")
+                        .IsRequired()
                         .HasColumnType("text");
 
                     b.Property<bool>("Estado")
                         .HasColumnType("boolean");
 
                     b.Property<DateTime>("FechaRegistro")
-                        .HasColumnType("timestamp without time zone");
+                        .HasColumnType("timestamp with time zone");
 
                     b.Property<int>("IdRol")
                         .HasColumnType("integer");
 
                     b.Property<string>("Nombre")
+                        .IsRequired()
                         .HasColumnType("text");
 
                     b.HasKey("IdUsuario");
@@ -231,10 +256,17 @@ namespace voto.API.Migrations
 
                     NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("IdVoto"));
 
+                    b.Property<int>("CandidatoIdCandidato")
+                        .HasColumnType("integer");
+
+                    b.Property<int>("EleccionIdEleccion")
+                        .HasColumnType("integer");
+
                     b.Property<DateTime>("FechaHora")
-                        .HasColumnType("timestamp without time zone");
+                        .HasColumnType("timestamp with time zone");
 
                     b.Property<string>("HashVoto")
+                        .IsRequired()
                         .HasColumnType("text");
 
                     b.Property<int?>("IdCandidato")
@@ -246,13 +278,16 @@ namespace voto.API.Migrations
                     b.Property<int?>("IdLista")
                         .HasColumnType("integer");
 
+                    b.Property<int>("ListaIdlista")
+                        .HasColumnType("integer");
+
                     b.HasKey("IdVoto");
 
-                    b.HasIndex("IdCandidato");
+                    b.HasIndex("CandidatoIdCandidato");
 
-                    b.HasIndex("IdEleccion");
+                    b.HasIndex("EleccionIdEleccion");
 
-                    b.HasIndex("IdLista");
+                    b.HasIndex("ListaIdlista");
 
                     b.ToTable("Votos");
                 });
@@ -261,7 +296,9 @@ namespace voto.API.Migrations
                 {
                     b.HasOne("ProyectoVotoElectronico.Eleccion", "Eleccion")
                         .WithMany("Candidatos")
-                        .HasForeignKey("EleccionIdEleccion");
+                        .HasForeignKey("EleccionIdEleccion")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
 
                     b.HasOne("ProyectoVotoElectronico.ListaPolitica", null)
                         .WithMany("Candidatos")
@@ -285,13 +322,13 @@ namespace voto.API.Migrations
                 {
                     b.HasOne("ProyectoVotoElectronico.Eleccion", "Eleccion")
                         .WithMany()
-                        .HasForeignKey("IdEleccion")
+                        .HasForeignKey("EleccionIdEleccion")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
                     b.HasOne("ProyectoVotoElectronico.Usuario", "Usuario")
                         .WithMany()
-                        .HasForeignKey("IdUsuario")
+                        .HasForeignKey("UsuarioIdUsuario")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
@@ -304,7 +341,9 @@ namespace voto.API.Migrations
                 {
                     b.HasOne("ProyectoVotoElectronico.Eleccion", "Eleccion")
                         .WithMany()
-                        .HasForeignKey("EleccionIdEleccion");
+                        .HasForeignKey("EleccionIdEleccion")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
 
                     b.Navigation("Eleccion");
                 });
@@ -324,17 +363,21 @@ namespace voto.API.Migrations
                 {
                     b.HasOne("ProyectoVotoElectronico.Candidato", "Candidato")
                         .WithMany()
-                        .HasForeignKey("IdCandidato");
+                        .HasForeignKey("CandidatoIdCandidato")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
 
                     b.HasOne("ProyectoVotoElectronico.Eleccion", "Eleccion")
                         .WithMany("Votos")
-                        .HasForeignKey("IdEleccion")
+                        .HasForeignKey("EleccionIdEleccion")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
                     b.HasOne("ProyectoVotoElectronico.ListaPolitica", "Lista")
                         .WithMany()
-                        .HasForeignKey("IdLista");
+                        .HasForeignKey("ListaIdlista")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
 
                     b.Navigation("Candidato");
 

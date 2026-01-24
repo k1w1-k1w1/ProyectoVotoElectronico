@@ -10,17 +10,13 @@ namespace ProyectoVotoElectronico
         public string Nombre { get; set; }
         public string Apellido { get; set; }
         public string Email { get; set; }
-        public string Password { get; set; }
-        public bool Estado { get; set; }
+        public bool Estado { get; set; } = true;
         public DateTime FechaRegistro { get; set; }
-        public string? Codigo2FA { get; set; }
-        public DateTime? CodigoExpira { get; set; }
-
 
         public int IdRol { get; set; }
 
         [ForeignKey("IdRol")]
-        public Rol Rol { get; set; }
+        public Rol? Rol { get; set; }
 
     }
 }

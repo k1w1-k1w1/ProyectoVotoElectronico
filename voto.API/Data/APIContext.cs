@@ -23,5 +23,6 @@ namespace voto
         public DbSet<ProyectoVotoElectronico.Eleccion> Elecciones { get; set; } = default!;
         public DbSet<ProyectoVotoElectronico.Resultado> Resultados { get; set; } = default!;
         public DbSet<ProyectoVotoElectronico.ListaPolitica> ListasPoliticas { get; set; } = default!;
+        public DbSet<RegistroVotacion> RegistroVotaciones { get; set; } = default!;
     }
 }

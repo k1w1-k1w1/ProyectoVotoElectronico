@@ -14,5 +14,6 @@ namespace ProyectoVotoElectronico
         public int EleccionId { get; set; }
         public Eleccion Eleccion { get; set; }
 
+        public virtual ICollection<Candidato> Candidatos { get; set; }
     }
 }
