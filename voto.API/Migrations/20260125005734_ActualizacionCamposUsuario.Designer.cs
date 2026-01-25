@@ -2,6 +2,7 @@
 using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 using voto;
@@ -11,9 +12,11 @@ using voto;
 namespace voto.API.Migrations
 {
     [DbContext(typeof(APIContext))]
-    partial class APIContextModelSnapshot : ModelSnapshot
+    [Migration("20260125005734_ActualizacionCamposUsuario")]
+    partial class ActualizacionCamposUsuario
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -201,12 +204,6 @@ namespace voto.API.Migrations
                     b.Property<string>("Cedula")
                         .HasColumnType("text");
 
-                    b.Property<string>("Ciudad")
-                        .HasColumnType("text");
-
-                    b.Property<int>("Edad")
-                        .HasColumnType("integer");
-
                     b.Property<string>("Email")
                         .HasColumnType("text");
 
@@ -264,6 +261,46 @@ namespace voto.API.Migrations
                     b.HasIndex("IdLista");
 
                     b.ToTable("Votos");
+                });
+
+            modelBuilder.Entity("VotoElectronico.Api.Models.Votante", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
+
+                    b.Property<string>("Apellido")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<string>("Cedula")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<string>("Ciudad")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<int>("Edad")
+                        .HasColumnType("integer");
+
+                    b.Property<string>("Email")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<string>("IdentityUserId")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<string>("Nombre")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.HasKey("Id");
+
+                    b.ToTable("Votantes");
                 });
 
             modelBuilder.Entity("ProyectoVotoElectronico.Candidato", b =>

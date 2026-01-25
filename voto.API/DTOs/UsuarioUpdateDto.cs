@@ -8,5 +8,7 @@
         public string Email { get; set; }
         public int IdRol { get; set; }
         public bool Estado { get; set; }
+        public int Edad { get; set; }
+        public string Ciudad { get; set; }
     }
 }

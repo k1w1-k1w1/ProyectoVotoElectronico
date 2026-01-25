@@ -3,6 +3,8 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Options;
 using VotoElectronico.Seguro.Data;
 using VotoElectronico.Seguro.Models;
+using VotoElectronico.Seguro.Services;
+using Microsoft.AspNetCore.Identity.UI.Services;
 
 namespace VotoElectronico.Seguro
 {
@@ -32,8 +34,10 @@ namespace VotoElectronico.Seguro
 
             builder.Services.AddHttpClient("ApiVoto", client =>
             {
-                client.BaseAddress = new Uri("http://localhost:5294/"); // PUERTO DE TU API
+                client.BaseAddress = new Uri("http://localhost:5294/"); // PUERTO DE API
             });
+
+            builder.Services.AddTransient<IEmailSender, EmailSender>();
 
             var app = builder.Build();
 

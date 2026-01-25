@@ -66,25 +66,24 @@ namespace voto.API.Controllers
         {
             var usuario = new Usuario
             {
+                Cedula = dto.Cedula,
+                IdentityUserId = dto.IdentityUserId,
                 Nombre = dto.Nombre,
                 Apellido = dto.Apellido,
                 Email = dto.Email,
-                IdRol = dto.IdRol,
-                Estado = dto.Estado,
-                FechaRegistro = System.DateTime.Now
+                IdRol = 2,
+                Estado = true,
+                Edad = dto.Edad,
+                Ciudad = dto.Ciudad,
+                FechaRegistro = DateTime.Now
             };
 
             _context.Usuarios.Add(usuario);
             await _context.SaveChangesAsync();
 
-            return CreatedAtAction(
-                nameof(GetUsuario),
-                new { id = usuario.IdUsuario },
-                usuario
-            );
+            return CreatedAtAction(nameof(GetUsuario), new { id = usuario.IdUsuario }, usuario);
         }
 
- 
         // PUT: api/Usuarios/5
 
         [HttpPut("{id}")]

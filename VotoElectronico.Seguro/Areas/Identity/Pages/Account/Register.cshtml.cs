@@ -140,20 +140,42 @@ namespace VotoElectronico.Seguro.Areas.Identity.Pages.Account
                 Email = Input.Email
             };
 
-            var response = await client.PostAsJsonAsync("api/votantes", votanteDto);
+            var response = await client.PostAsJsonAsync("api/Usuarios", votanteDto);
 
             if (!response.IsSuccessStatusCode)
             {
-                // rollback
-                await _userManager.DeleteAsync(user);
+                var errorDetalle = await response.Content.ReadAsStringAsync();
 
-                ModelState.AddModelError("", "Error al registrar el votante en la API.");
+                ModelState.AddModelError(string.Empty, $"Error de la API ({response.StatusCode}): {errorDetalle}");
+
+                await _userManager.DeleteAsync(user);
                 return Page();
             }
 
-            // 3️⃣ Login
-            await _signInManager.SignInAsync(user, isPersistent: false);
-            return LocalRedirect(returnUrl);
+            var userId = await _userManager.GetUserIdAsync(user);
+            var code = await _userManager.GenerateEmailConfirmationTokenAsync(user);
+            code = WebEncoders.Base64UrlEncode(Encoding.UTF8.GetBytes(code));
+
+            var callbackUrl = Url.Page(
+                "/Account/ConfirmEmail",
+                pageHandler: null,
+                values: new { area = "Identity", userId = userId, code = code, returnUrl = returnUrl },
+                protocol: Request.Scheme);
+
+            await _emailSender.SendEmailAsync(Input.Email, "Confirma tu voto electrónico",
+                $"Por favor confirma tu cuenta <a href='{HtmlEncoder.Default.Encode(callbackUrl)}'>haciendo clic aquí</a>.");
+
+            if (_userManager.Options.SignIn.RequireConfirmedAccount)
+            {
+                // Mandamos un mensaje a la página de login para que el usuario sepa qué hacer
+                TempData["StatusMessage"] = "Registro exitoso. Por favor, revisa tu correo real de Gmail para confirmar tu cuenta antes de iniciar sesión.";
+                return RedirectToPage("Login");
+            }
+            else
+            {
+                await _signInManager.SignInAsync(user, isPersistent: false);
+                return LocalRedirect(returnUrl);
+            }
         }
 
         private ApplicationUser CreateUser()
