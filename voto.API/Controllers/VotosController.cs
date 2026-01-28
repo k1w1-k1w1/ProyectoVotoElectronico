@@ -21,9 +21,11 @@ namespace voto.API.Controllers
         }
 
         // POST: api/Votos/EmitirVoto
+
         [HttpPost("EmitirVoto")]
         public async Task<IActionResult> EmitirVoto(VotoRequest request)
         {
+
             var eleccion = await _context.Elecciones.FindAsync(request.IdEleccion);
             if (eleccion == null || eleccion.Estado != "ABIERTA")
                 return BadRequest("La elección no está activa.");
@@ -69,6 +71,16 @@ namespace voto.API.Controllers
                 var mensajeError = ex.InnerException?.Message ?? ex.Message;
                 return StatusCode(500, $"Error real: {mensajeError}");
             }
+        }
+
+
+        [HttpGet("YaVoto/{idUsuario}")]
+        public async Task<IActionResult> VerificarVoto(int idUsuario)
+        {
+            // Supongamos que tu tabla se llama RegistroVotaciones
+            var existe = await _context.RegistroVotaciones
+                                       .AnyAsync(v => v.IdUsuario == idUsuario);
+            return Ok(existe);
         }
 
         private string CalcularHash(string texto)

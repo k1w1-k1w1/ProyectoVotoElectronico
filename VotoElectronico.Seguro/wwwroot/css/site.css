@@ -1,22 +1,27 @@
-html {
-  font-size: 14px;
-}
-
-@media (min-width: 768px) {
-  html {
-    font-size: 16px;
-  }
-}
-
 .btn:focus, .btn:active:focus, .btn-link.nav-link:focus, .form-control:focus, .form-check-input:focus {
-  box-shadow: 0 0 0 0.1rem white, 0 0 0 0.25rem #258cfb;
+    box-shadow: 0 0 0 0.1rem white, 0 0 0 0.25rem var(--utn-red);
 }
 
-html {
-  position: relative;
-  min-height: 100%;
+:root {
+    --utn-red: #CC0000;
 }
 
 body {
-  margin-bottom: 60px;
+    background-color: #f8f9fa;
+    margin-bottom: 60px;
+}
+
+.btn-primary {
+    background-color: var(--utn-red) !important;
+    border-color: var(--utn-red) !important;
+    color: white !important;
+}
+
+    .btn-primary:hover {
+        background-color: #A30000 !important;
+        transform: scale(1.02);
+    }
+
+.nav-link.text-dark {
+    color: white !important;
 }

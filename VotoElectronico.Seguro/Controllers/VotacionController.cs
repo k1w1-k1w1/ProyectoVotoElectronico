@@ -1,41 +1,92 @@
 ﻿using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
-using System.Security.Claims;
 using Newtonsoft.Json;
+using System.Security.Claims;
+using VotoElectronico.Seguro.Models;
 
-[Authorize] // Solo usuarios logueados pueden entrar
+[Authorize]
 public class VotacionController : Controller
 {
     private readonly IHttpClientFactory _httpClientFactory;
+    private readonly UserManager<ApplicationUser> _userManager; 
 
-    public VotacionController(IHttpClientFactory httpClientFactory)
+    public VotacionController(IHttpClientFactory httpClientFactory, UserManager<ApplicationUser> userManager)
     {
         _httpClientFactory = httpClientFactory;
+        _userManager = userManager;
     }
 
     public async Task<IActionResult> Index()
     {
-        var client = _httpClientFactory.CreateClient("ApiVoto");
+        var userIdentity = await _userManager.GetUserAsync(User);
+        if (userIdentity == null || !userIdentity.EmailConfirmed) 
+        {
+            return RedirectToPage("/Account/Manage/Email", new { area = "Identity" });
+        }
 
-        // 1. Obtener el email del usuario logueado en Identity
+        var client = _httpClientFactory.CreateClient("ApiVoto");
         var email = User.FindFirstValue(ClaimTypes.Email);
 
-        // 2. Buscar al usuario en la API para obtener su IdUsuario real
+        // 1. Buscar al usuario en la API
         var userResponse = await client.GetAsync($"api/Usuarios/ByEmail/{email}");
         if (!userResponse.IsSuccessStatusCode)
         {
-            return View("ErrorUsuarioNoRegistrado"); // Si el email no está en la DB de votos
+            return View("ErrorUsuarioNoRegistrado");
         }
 
-        var userJson = await userResponse.Content.ReadAsStringAsync();
-        var usuarioApi = JsonConvert.DeserializeObject<dynamic>(userJson);
-        ViewBag.IdUsuario = usuarioApi.idUsuario; // Guardamos el ID para el voto
+        var usuarioApi = await userResponse.Content.ReadFromJsonAsync<dynamic>();
+        int idUsuario = usuarioApi.GetProperty("idUsuario").GetInt32();
+        ViewBag.IdUsuario = idUsuario;
 
-        // 3. Obtener las listas políticas para mostrar en la papeleta
-        var listasResponse = await client.GetAsync("api/ListasPoliticas");
-        var listasJson = await listasResponse.Content.ReadAsStringAsync();
-        var listas = JsonConvert.DeserializeObject<List<dynamic>>(listasJson);
+        // 2. Verificar si ya votó (usando la nueva forma)
+        var yaVotoResponse = await client.GetAsync($"api/Votos/YaVoto/{idUsuario}");
+        if (yaVotoResponse.IsSuccessStatusCode)
+        {
+            var yaVoto = await yaVotoResponse.Content.ReadFromJsonAsync<bool>();
+            if (yaVoto)
+            {
+                return View("YaVotaste"); // Vista para usuarios que ya cumplieron su voto
+            }
+        }
+
+        // 3. Obtener las listas políticas
+        var listas = await client.GetFromJsonAsync<List<dynamic>>("api/ListasPoliticas/eleccion/1");
 
         return View(listas);
     }
+
+    [HttpPost]
+    public async Task<IActionResult> RegistrarVoto(int idLista, int idUsuario, int idCandidato)
+    {
+        var client = _httpClientFactory.CreateClient("ApiVoto");
+
+        // Este objeto debe coincidir con tu clase 'VotoRequest' de la API
+        var request = new
+        {
+            IdUsuario = idUsuario,
+            IdEleccion = 1, // La que creamos hoy
+            IdCandidato = idCandidato,
+            IdLista = idLista
+        };
+
+        // ¡IMPORTANTE!: Agregamos "/EmitirVoto" a la URL
+        var response = await client.PostAsJsonAsync("api/Votos/EmitirVoto", request);
+
+        if (response.IsSuccessStatusCode)
+        {
+            return RedirectToAction("Confirmacion");
+        }
+
+        // Capturamos el error para verlo en la franja roja
+        var errorReal = await response.Content.ReadAsStringAsync();
+        TempData["Error"] = $"Error: {errorReal}";
+        return RedirectToAction("Index");
+    }
+
+    public IActionResult Confirmacion()
+    {
+        return View(); 
+    }
 }
+

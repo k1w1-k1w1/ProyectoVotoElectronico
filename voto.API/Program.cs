@@ -33,11 +33,13 @@ namespace voto.API
                 app.UseSwaggerUI();
             }
 
-            app.UseHttpsRedirection();
+            app.UseCors(policy => policy.AllowAnyOrigin().AllowAnyMethod().AllowAnyHeader());
+
+            //app.UseHttpsRedirection();
 
             app.UseAuthorization();
 
-            app.MapControllers();
+            app.MapControllers();      
 
             app.Run();
         }

@@ -10,7 +10,9 @@ namespace ProyectoVotoElectronico
     public class ListaPolitica
     {
         [Key]public int Idlista { get; set; }
-        public string NombreLista { get; set; } 
+        public string NombreLista { get; set; }
+        public string Descripcion { get; set; }
+        public string UrlLogo { get; set; }
         public int EleccionId { get; set; }
         public Eleccion Eleccion { get; set; }
 

@@ -13,6 +13,9 @@ namespace ProyectoVotoElectronico
 
         public string HashVoto { get; set; }
 
+
+        public int IdUsuario { get; set; }
+
         // Relación con Elección
         public int IdEleccion { get; set; }
         [ForeignKey("IdEleccion")]

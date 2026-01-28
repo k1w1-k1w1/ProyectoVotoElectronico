@@ -1,0 +1,78 @@
+﻿@model List<dynamic>
+@{
+    ViewData["Title"] = "Papeleta Electoral";
+}
+
+<style>
+    .card-img-top {
+        background-color: #f8f9fa;
+        min-height: 150px;
+    }
+</style>
+
+<div class="container mt-5">
+    <h1 class="text-center mb-4">Papeleta Electoral</h1>
+    <hr />
+
+    @if (TempData["Error"] != null)
+    {
+        <div class="alert alert-danger alert-dismissible fade show" role="alert">
+            @TempData["Error"]
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        </div>
+    }
+
+    <div class="row">
+        @foreach (var lista in Model)
+        {
+            <div class="col-md-4 mb-4">
+                <div class="card h-100 shadow">
+                    @* "urlLogo" con 'u' minúscula según tu JSON *@
+                    <img src="@lista.GetProperty("urlLogo").GetString()" class="card-img-top p-3" alt="Logo Lista" style="max-height: 200px; object-fit: contain;">
+
+                    <div class="card-body text-center">
+                        <h5 class="card-title fw-bold">@lista.GetProperty("nombreLista").GetString()</h5>
+                        <p class="card-text text-muted">@lista.GetProperty("descripcion").GetString()</p>
+
+                        <div class="mt-3 text-start">
+                            <h6 class="fw-bold border-bottom pb-1">Integrantes:</h6>
+                            <ul class="list-unstyled">
+                                @foreach (var cand in lista.GetProperty("candidatos").EnumerateArray())
+                                {
+                                    <li>
+                                        <i class="bi bi-person-check"></i>
+                                        @cand.GetProperty("nombre").GetString() @cand.GetProperty("apellido").GetString()
+                                    </li>
+                                }
+                            </ul>
+                        </div>
+                    </div>
+
+                    <div class="card-footer bg-transparent border-0 pb-3">
+                        <form asp-controller="Votacion" asp-action="RegistrarVoto" method="post">
+                            <input type="hidden" name="idUsuario" value="@ViewBag.IdUsuario" />
+                            @* "idlista" todo en minúsculas según tu JSON *@
+                            <input type="hidden" name="idLista" value="@lista.GetProperty("idlista").GetInt32()" />
+
+                            @{
+                                var enumerador = lista.GetProperty("candidatos").EnumerateArray();
+                                int idCand = 0;
+                                if (enumerador.MoveNext())
+                                {
+                                    @* "idCandidato" con 'C' mayúscula según tu JSON *@
+                                    idCand = enumerador.Current.GetProperty("idCandidato").GetInt32();
+                                }
+                            }
+                            <input type="hidden" name="idCandidato" value="@idCand" />
+
+                            <button type="submit" class="btn btn-primary w-100 fw-bold"
+                                    onclick="return confirm('¿Votar por @lista.GetProperty("nombreLista").GetString()?')">
+                                SELECCIONAR
+                            </button>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        }
+    </div>
+</div>

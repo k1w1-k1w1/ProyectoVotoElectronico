@@ -1,0 +1,33 @@
+﻿@{
+    ViewData["Title"] = "Usuario No Sincronizado";
+}
+
+<div class="container mt-5">
+    <div class="row justify-content-center">
+        <div class="col-md-8">
+            <div class="card border-danger shadow">
+                <div class="card-header bg-danger text-white text-center">
+                    <h4 class="mb-0"><i class="bi bi-exclamation-triangle-fill"></i> Error de Registro en el Padrón</h4>
+                </div>
+                <div class="card-body text-center p-5">
+                    <h2 class="text-danger mb-4">¡Atención!</h2>
+                    <p class="lead">
+                        Tu cuenta de usuario ha sido autenticada, pero no apareces registrado en el sistema electoral de la API.
+                    </p>
+                    <hr />
+                    <p class="text-muted">
+                        Esto puede deberse a un error durante la sincronización de tu registro el día 22 de enero.
+                        Por favor, contacta al administrador del sistema para verificar tu número de cédula y habilitar tu voto.
+                    </p>
+                    <div class="mt-4">
+                        <a href="/" class="btn btn-outline-secondary me-2">Volver al Inicio</a>
+                        <a asp-area="Identity" asp-page="/Account/Manage/Index" class="btn btn-primary">Revisar mi Perfil</a>
+                    </div>
+                </div>
+                <div class="card-footer text-muted text-center">
+                    ID de Usuario: @User.Identity?.Name
+                </div>
+            </div>
+        </div>
+    </div>
+</div>

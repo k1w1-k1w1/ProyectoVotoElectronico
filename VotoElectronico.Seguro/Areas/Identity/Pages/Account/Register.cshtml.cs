@@ -118,7 +118,12 @@ namespace VotoElectronico.Seguro.Areas.Identity.Pages.Account
 
             var result = await _userManager.CreateAsync(user, Input.Password);
 
-            if (!result.Succeeded)
+            if (result.Succeeded) 
+            {
+                await _userManager.AddToRoleAsync(user, "Votante");
+
+            }
+            else
             {
                 foreach (var error in result.Errors)
                     ModelState.AddModelError(string.Empty, error.Description);
@@ -167,8 +172,7 @@ namespace VotoElectronico.Seguro.Areas.Identity.Pages.Account
 
             if (_userManager.Options.SignIn.RequireConfirmedAccount)
             {
-                // Mandamos un mensaje a la página de login para que el usuario sepa qué hacer
-                TempData["StatusMessage"] = "Registro exitoso. Por favor, revisa tu correo real de Gmail para confirmar tu cuenta antes de iniciar sesión.";
+                TempData["StatusMessage"] = "Registro exitoso. Por favor, revisa tu correo para confirmar tu cuenta antes de iniciar sesión.";
                 return RedirectToPage("Login");
             }
             else

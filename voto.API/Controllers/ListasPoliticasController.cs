@@ -41,6 +41,18 @@ namespace voto.API.Controllers
             return Ok(lista);
         }
 
+        // Agrega esto para solucionar el Error 405
+        [HttpGet]
+        public async Task<IActionResult> ListarTodas()
+        {
+            var listas = await _context.ListasPoliticas
+                .Include(l => l.Candidatos) // Carga los candidatos para las tarjetas
+                .AsNoTracking()
+                .ToListAsync();
+
+            return Ok(listas);
+        }
+
         // GET: api/ListasPoliticas/eleccion/5
         [HttpGet("eleccion/{idEleccion}")]
         public async Task<IActionResult> ObtenerPorEleccion(int idEleccion)
@@ -70,5 +82,6 @@ namespace voto.API.Controllers
 
             return NoContent();
         }
+
     }
 }
