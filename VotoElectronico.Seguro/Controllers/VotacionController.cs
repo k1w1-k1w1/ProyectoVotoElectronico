@@ -1,15 +1,15 @@
 ﻿using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
-using Newtonsoft.Json;
 using System.Security.Claims;
 using VotoElectronico.Seguro.Models;
+using System.Net.Http.Json; 
 
 [Authorize]
 public class VotacionController : Controller
 {
     private readonly IHttpClientFactory _httpClientFactory;
-    private readonly UserManager<ApplicationUser> _userManager; 
+    private readonly UserManager<ApplicationUser> _userManager;
 
     public VotacionController(IHttpClientFactory httpClientFactory, UserManager<ApplicationUser> userManager)
     {
@@ -19,74 +19,67 @@ public class VotacionController : Controller
 
     public async Task<IActionResult> Index()
     {
-        var userIdentity = await _userManager.GetUserAsync(User);
-        if (userIdentity == null || !userIdentity.EmailConfirmed) 
-        {
-            return RedirectToPage("/Account/Manage/Email", new { area = "Identity" });
-        }
+        var client = _httpClientFactory.CreateClient("ApiVoto");
 
+        var todas = await client.GetFromJsonAsync<List<Eleccion>>("api/Elecciones");
+        var abiertas = todas?.Where(e => e.Estado == "ABIERTA").ToList() ?? new List<Eleccion>();
+
+        return View("Index", abiertas);
+    }
+
+    public async Task<IActionResult> Papeleta(int idEleccion)
+    {
         var client = _httpClientFactory.CreateClient("ApiVoto");
         var email = User.FindFirstValue(ClaimTypes.Email);
 
-        // 1. Buscar al usuario en la API
+        // Buscar al usuario en la API
         var userResponse = await client.GetAsync($"api/Usuarios/ByEmail/{email}");
-        if (!userResponse.IsSuccessStatusCode)
-        {
-            return View("ErrorUsuarioNoRegistrado");
-        }
+        if (!userResponse.IsSuccessStatusCode) return View("ErrorUsuarioNoRegistrado");
 
-        var usuarioApi = await userResponse.Content.ReadFromJsonAsync<dynamic>();
+        var usuarioApi = await userResponse.Content.ReadFromJsonAsync<System.Text.Json.JsonElement>();
         int idUsuario = usuarioApi.GetProperty("idUsuario").GetInt32();
-        ViewBag.IdUsuario = idUsuario;
 
-        // 2. Verificar si ya votó (usando la nueva forma)
-        var yaVotoResponse = await client.GetAsync($"api/Votos/YaVoto/{idUsuario}");
+        // Verificar si ya votó en esta elección específica
+        var yaVotoResponse = await client.GetAsync($"api/Votos/YaVoto/{idUsuario}/{idEleccion}");
         if (yaVotoResponse.IsSuccessStatusCode)
         {
             var yaVoto = await yaVotoResponse.Content.ReadFromJsonAsync<bool>();
-            if (yaVoto)
-            {
-                return View("YaVotaste"); // Vista para usuarios que ya cumplieron su voto
-            }
+            if (yaVoto) return View("YaVotaste");
         }
 
-        // 3. Obtener las listas políticas
-        var listas = await client.GetFromJsonAsync<List<dynamic>>("api/ListasPoliticas/eleccion/1");
+        // Obtener listas y candidatos de la elección
+        var listas = await client.GetFromJsonAsync<List<dynamic>>($"api/ListasPoliticas/eleccion/{idEleccion}");
 
-        return View(listas);
+        ViewBag.IdUsuario = idUsuario;
+        ViewBag.IdEleccion = idEleccion;
+
+        // Forzamos el nombre de la vista "Papeleta" para evitar que use la del Index
+        return View("Papeleta", listas);
     }
 
     [HttpPost]
-    public async Task<IActionResult> RegistrarVoto(int idLista, int idUsuario, int idCandidato)
+    public async Task<IActionResult> RegistrarVoto(int idLista, int idUsuario, int idCandidato, int idEleccion)
     {
         var client = _httpClientFactory.CreateClient("ApiVoto");
 
-        // Este objeto debe coincidir con tu clase 'VotoRequest' de la API
         var request = new
         {
             IdUsuario = idUsuario,
-            IdEleccion = 1, // La que creamos hoy
+            IdEleccion = idEleccion,
             IdCandidato = idCandidato,
             IdLista = idLista
         };
 
-        // ¡IMPORTANTE!: Agregamos "/EmitirVoto" a la URL
         var response = await client.PostAsJsonAsync("api/Votos/EmitirVoto", request);
 
-        if (response.IsSuccessStatusCode)
-        {
-            return RedirectToAction("Confirmacion");
-        }
+        if (response.IsSuccessStatusCode) return RedirectToAction("Confirmacion");
 
-        // Capturamos el error para verlo en la franja roja
         var errorReal = await response.Content.ReadAsStringAsync();
         TempData["Error"] = $"Error: {errorReal}";
-        return RedirectToAction("Index");
+
+        // Si falla, regresa a la papeleta de la misma elección
+        return RedirectToAction("Papeleta", new { idEleccion = idEleccion });
     }
 
-    public IActionResult Confirmacion()
-    {
-        return View(); 
-    }
+    public IActionResult Confirmacion() => View();
 }
-

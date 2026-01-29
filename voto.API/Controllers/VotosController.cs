@@ -42,7 +42,7 @@ namespace voto.API.Controllers
                 {
                     IdUsuario = request.IdUsuario,
                     IdEleccion = request.IdEleccion,
-                    FechaHora = DateTime.UtcNow
+                    FechaHora = DateTime.Now
                 };
                 _context.RegistroVotaciones.Add(registro);
 
@@ -74,12 +74,12 @@ namespace voto.API.Controllers
         }
 
 
-        [HttpGet("YaVoto/{idUsuario}")]
-        public async Task<IActionResult> VerificarVoto(int idUsuario)
+        [HttpGet("YaVoto/{idUsuario}/{idEleccion}")]
+        public async Task<IActionResult> VerificarVoto(int idUsuario, int idEleccion)
         {
-            // Supongamos que tu tabla se llama RegistroVotaciones
+            // Ahora validamos si el usuario ya votó en ESTA elección específica
             var existe = await _context.RegistroVotaciones
-                                       .AnyAsync(v => v.IdUsuario == idUsuario);
+                                .AnyAsync(v => v.IdUsuario == idUsuario && v.IdEleccion == idEleccion);
             return Ok(existe);
         }
 

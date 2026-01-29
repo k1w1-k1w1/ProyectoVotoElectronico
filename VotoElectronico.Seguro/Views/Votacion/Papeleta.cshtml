@@ -1,0 +1,50 @@
+﻿@using System.Text.Json
+@model IEnumerable<dynamic>
+@{
+    ViewData["Title"] = "Papeleta Electoral";
+}
+
+<div class="container mt-5">
+    <h1 class="text-center mb-4 text-danger fw-bold">PAPELETA ELECTORAL</h1>
+    <h5 class="text-center text-muted mb-4">Seleccione su opción de preferencia</h5>
+    <hr />
+
+    <div class="row">
+        @foreach (JsonElement lista in Model)
+        {
+            <div class="col-md-4 mb-4">
+                <div class="card h-100 shadow border-0">
+                    <img src="@lista.GetProperty("urlLogo").GetString()" class="card-img-top p-3" style="max-height: 180px; object-fit: contain;">
+
+                    <div class="card-body text-center">
+                        <h5 class="card-title fw-bold text-danger">@lista.GetProperty("nombreLista").GetString()</h5>
+                        <p class="card-text text-muted small">@lista.GetProperty("descripcion").GetString()</p>
+                    </div>
+
+                    <div class="card-footer bg-transparent border-0 pb-4 text-center">
+                        <form asp-controller="Votacion" asp-action="RegistrarVoto" method="post">
+                            <input type="hidden" name="idUsuario" value="@ViewBag.IdUsuario" />
+                            <input type="hidden" name="idEleccion" value="@ViewBag.IdEleccion" />
+                            <input type="hidden" name="idLista" value="@lista.GetProperty("idlista").GetInt32()" />
+
+                            @{
+                                var candidatos = lista.GetProperty("candidatos").EnumerateArray();
+                                int idCand = 0;
+                                if (candidatos.MoveNext())
+                                {
+                                    idCand = candidatos.Current.GetProperty("idCandidato").GetInt32();
+                                }
+                            }
+                            <input type="hidden" name="idCandidato" value="@idCand" />
+
+                            <button type="submit" class="btn btn-outline-danger w-100 fw-bold rounded-pill"
+                                    onclick="return confirm('¿Confirmar voto por @lista.GetProperty("nombreLista").GetString()?')">
+                                <i class="bi bi-check-lg"></i> VOTAR
+                            </button>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        }
+    </div>
+</div>

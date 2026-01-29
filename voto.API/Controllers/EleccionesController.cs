@@ -11,7 +11,6 @@ namespace voto.API.Controllers
 {
     [Route("api/[controller]")]
     [ApiController]
-    //[Authorize(Roles = "Administrador")] 
     public class EleccionesController : ControllerBase
     {
         private readonly APIContext _context;
@@ -23,7 +22,7 @@ namespace voto.API.Controllers
 
         // GET: api/Elecciones
         [HttpGet]
-        [AllowAnonymous] 
+        [AllowAnonymous]
         public async Task<ActionResult<IEnumerable<Eleccion>>> GetElecciones()
         {
             var elecciones = await _context.Elecciones.ToListAsync();
@@ -33,6 +32,7 @@ namespace voto.API.Controllers
                 ActualizarEstadoEleccion(e);
             }
 
+            await _context.SaveChangesAsync(); // Guardamos los cambios de estado detectados
             return elecciones;
         }
 
@@ -48,6 +48,8 @@ namespace voto.API.Controllers
             if (eleccion == null) return NotFound();
 
             ActualizarEstadoEleccion(eleccion);
+            await _context.SaveChangesAsync();
+
             return eleccion;
         }
 
@@ -60,11 +62,29 @@ namespace voto.API.Controllers
                 return BadRequest("La fecha de inicio debe ser anterior a la fecha de fin.");
             }
 
-            eleccion.Estado = "CREADA"; 
+            // Calculamos el estado basándonos en la fecha que viene del MVC
+            CalcularEstadoSinGuardar(eleccion);
+
             _context.Elecciones.Add(eleccion);
             await _context.SaveChangesAsync();
 
             return CreatedAtAction("GetEleccion", new { id = eleccion.IdEleccion }, eleccion);
+        }
+
+        // POST: api/Elecciones/Cerrar/5
+        [HttpPost("Cerrar/{id}")]
+        public async Task<IActionResult> CerrarManual(int id)
+        {
+            var eleccion = await _context.Elecciones.FindAsync(id);
+            if (eleccion == null) return NotFound();
+
+            eleccion.Estado = "CERRADA";
+            eleccion.FechaFin = DateTime.Now;
+
+            _context.Entry(eleccion).State = EntityState.Modified;
+            await _context.SaveChangesAsync();
+
+            return Ok(new { message = "Elección cerrada exitosamente." });
         }
 
         // PUT: api/Elecciones/5
@@ -74,22 +94,15 @@ namespace voto.API.Controllers
             if (id != eleccion.IdEleccion) return BadRequest();
 
             var eleccionExistente = await _context.Elecciones.AsNoTracking().FirstOrDefaultAsync(x => x.IdEleccion == id);
+            if (eleccionExistente == null) return NotFound();
+
             if (eleccionExistente.Estado == "ABIERTA" || eleccionExistente.Estado == "CERRADA")
             {
-                return BadRequest("No se puede modificar una elección que ya ha iniciado o finalizado.");
+                return BadRequest("No se puede modificar una elección activa o finalizada.");
             }
 
             _context.Entry(eleccion).State = EntityState.Modified;
-
-            try
-            {
-                await _context.SaveChangesAsync();
-            }
-            catch (DbUpdateConcurrencyException)
-            {
-                if (!EleccionExists(id)) return NotFound();
-                else throw;
-            }
+            await _context.SaveChangesAsync();
 
             return NoContent();
         }
@@ -104,7 +117,7 @@ namespace voto.API.Controllers
             bool tieneVotos = await _context.Votos.AnyAsync(v => v.IdEleccion == id);
             if (tieneVotos)
             {
-                return BadRequest("No se puede eliminar una elección que ya registra sufragios.");
+                return BadRequest("No se puede eliminar una elección con votos registrados.");
             }
 
             _context.Elecciones.Remove(eleccion);
@@ -113,16 +126,32 @@ namespace voto.API.Controllers
             return NoContent();
         }
 
+        // --- MÉTODOS DE APOYO ---
+
         private void ActualizarEstadoEleccion(Eleccion e)
         {
-            var ahora = DateTime.UtcNow;
+            if (e.Estado == "CERRADA") return;
+
+            var ahora = DateTime.Now;
             if (ahora >= e.FechaInicio && ahora <= e.FechaFin)
                 e.Estado = "ABIERTA";
             else if (ahora > e.FechaFin)
                 e.Estado = "CERRADA";
+            else
+                e.Estado = "PROGRAMADA";
 
             _context.Entry(e).State = EntityState.Modified;
-            _context.SaveChanges();
+        }
+
+        private void CalcularEstadoSinGuardar(Eleccion e)
+        {
+            var ahora = DateTime.Now;
+            if (ahora >= e.FechaInicio && ahora <= e.FechaFin)
+                e.Estado = "ABIERTA";
+            else if (ahora > e.FechaFin)
+                e.Estado = "CERRADA";
+            else
+                e.Estado = "PROGRAMADA";
         }
 
         private bool EleccionExists(int id)
