@@ -39,7 +39,7 @@ public class VotacionController : Controller
         var usuarioApi = await userResponse.Content.ReadFromJsonAsync<System.Text.Json.JsonElement>();
         int idUsuario = usuarioApi.GetProperty("idUsuario").GetInt32();
 
-        // Verificar si ya votó en esta elección específica
+        // Verificar si ya voto
         var yaVotoResponse = await client.GetAsync($"api/Votos/YaVoto/{idUsuario}/{idEleccion}");
         if (yaVotoResponse.IsSuccessStatusCode)
         {
@@ -47,13 +47,12 @@ public class VotacionController : Controller
             if (yaVoto) return View("YaVotaste");
         }
 
-        // Obtener listas y candidatos de la elección
+        //listas y candidatos de la elección
         var listas = await client.GetFromJsonAsync<List<dynamic>>($"api/ListasPoliticas/eleccion/{idEleccion}");
 
         ViewBag.IdUsuario = idUsuario;
         ViewBag.IdEleccion = idEleccion;
 
-        // Forzamos el nombre de la vista "Papeleta" para evitar que use la del Index
         return View("Papeleta", listas);
     }
 
@@ -72,14 +71,22 @@ public class VotacionController : Controller
 
         var response = await client.PostAsJsonAsync("api/Votos/EmitirVoto", request);
 
-        if (response.IsSuccessStatusCode) return RedirectToAction("Confirmacion");
+        if (response.IsSuccessStatusCode)
+        {
+            var resultado = await response.Content.ReadFromJsonAsync<dynamic>();
+            TempData["VotoHash"] = resultado.GetProperty("comprobanteHash").GetString();
+            return RedirectToAction("Confirmacion");
+        }
 
         var errorReal = await response.Content.ReadAsStringAsync();
-        TempData["Error"] = $"Error: {errorReal}";
+        TempData["Error"] = $"Error al registrar: {errorReal}";
 
-        // Si falla, regresa a la papeleta de la misma elección
         return RedirectToAction("Papeleta", new { idEleccion = idEleccion });
     }
 
-    public IActionResult Confirmacion() => View();
+    public IActionResult Confirmacion()
+    {
+        ViewBag.Hash = TempData["VotoHash"];
+        return View();
+    }
 }

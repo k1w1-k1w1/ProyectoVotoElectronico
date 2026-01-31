@@ -15,9 +15,10 @@ namespace VotoElectronico.Seguro.Models
         public string Apellido { get; set; } 
 
         [Required(ErrorMessage = "La propuesta es obligatoria.")]
-        public string Propuesta { get; set; } 
+        public string Propuesta { get; set; }
 
-        [Required(ErrorMessage = "Debe subir una foto del candidato.")]
-        public IFormFile Foto { get; set; }
+        [Required(ErrorMessage = "El cargo es obligatorio.")]
+        public string Cargo { get; set; }
+        public IFormFile? Foto { get; set; }
     }
 }

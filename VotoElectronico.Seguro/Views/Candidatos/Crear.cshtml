@@ -6,7 +6,7 @@
             <div class="card shadow-lg border-0" style="border-top: 6px solid #CC0000 !important;">
                 <div class="card-body p-4">
                     <h2 class="text-center mb-4" style="color: #CC0000;">
-                        <i class="bi bi-person-plus-fill"></i> Registrar Candidato UTN
+                        Registrar Candidato 
                     </h2>
 
                     <hr />
@@ -17,27 +17,40 @@
                         <div class="mb-3">
                             <label class="form-label fw-bold">Elección a la que pertenece</label>
                             <select asp-for="IdEleccion" class="form-select shadow-sm" asp-items="ViewBag.Elecciones">
-                                <option value="">-- Seleccione una Elección --</option>
+                                <option value=""></option>
                             </select>
                             <span asp-validation-for="IdEleccion" class="text-danger small"></span>
                         </div>
+                        <div class="mb-3">
+                            <label class="form-label fw-bold">Cargo </label>
 
+                            <select id="selectCargo" class="form-select mb-2">
+                                <option value=""></option>
+                                <option value="Presidente">Presidente</option>
+                                <option value="Vicepresidente">Vicepresidente</option>
+                                <option value="Vocal">Vocal</option>
+                                <option value="Otro">Otro (Especificar...)</option>
+                            </select>
+
+                            <input type="text" asp-for="Cargo" id="inputCargoManual"
+                                   class="form-control d-none" placeholder="Escriba el nombre del cargo" />
+                        </div>
                         <div class="row">
                             <div class="col-md-6 mb-3">
                                 <label class="form-label fw-bold">Nombre</label>
-                                <input asp-for="Nombre" class="form-control" placeholder="Ej: Arturo" />
+                                <input asp-for="Nombre" class="form-control"/>
                                 <span asp-validation-for="Nombre" class="text-danger small"></span>
                             </div>
                             <div class="col-md-6 mb-3">
                                 <label class="form-label fw-bold">Apellido</label>
-                                <input asp-for="Apellido" class="form-control" placeholder="Ej: González" />
+                                <input asp-for="Apellido" class="form-control"/>
                                 <span asp-validation-for="Apellido" class="text-danger small"></span>
                             </div>
                         </div>
 
                         <div class="mb-3">
                             <label class="form-label fw-bold">Propuesta de Campaña</label>
-                            <textarea asp-for="Propuesta" class="form-control" rows="3" placeholder="Describe los planes del candidato..."></textarea>
+                            <textarea asp-for="Propuesta" class="form-control" rows="3"></textarea>
                             <span asp-validation-for="Propuesta" class="text-danger small"></span>
                         </div>
 
@@ -49,10 +62,10 @@
 
                         <div class="d-grid mt-4">
                             <button type="submit" class="btn btn-primary btn-lg fw-bold rounded-pill shadow">
-                                <i class="bi bi-save"></i> GUARDAR CANDIDATO
+                                GUARDAR CANDIDATO
                             </button>
                             <a asp-action="Index" asp-controller="Home" class="btn btn-link text-muted mt-2 text-decoration-none">
-                                <i class="bi bi-arrow-left"></i> Cancelar y Volver
+                                Cancelar y Volver
                             </a>
                         </div>
                     </form>
@@ -66,4 +79,20 @@
     @{
         await Html.RenderPartialAsync("_ValidationScriptsPartial");
     }
+
+    <script>
+        const selectCargo = document.getElementById('selectCargo');
+        const inputCargoManual = document.getElementById('inputCargoManual');
+
+        selectCargo.addEventListener('change', function () {
+            if (this.value === 'Otro') {
+                inputCargoManual.classList.remove('d-none');
+                inputCargoManual.value = '';
+                inputCargoManual.focus();
+            } else {
+                inputCargoManual.classList.add('d-none');
+                inputCargoManual.value = this.value;
+            }
+        });
+    </script>
 }

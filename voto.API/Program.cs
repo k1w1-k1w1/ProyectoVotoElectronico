@@ -33,7 +33,7 @@ namespace voto.API
                 app.UseSwaggerUI();
             }
 
-            app.UseCors(policy => policy.AllowAnyOrigin().AllowAnyMethod().AllowAnyHeader());
+            app.UseCors(policy => policy.AllowAnyHeader().AllowAnyMethod().AllowAnyOrigin());
 
             //app.UseHttpsRedirection();
 
@@ -44,4 +44,4 @@ namespace voto.API
             app.Run();
         }
     }
-}
+}   

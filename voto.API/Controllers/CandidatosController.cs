@@ -47,13 +47,21 @@ namespace voto.API.Controllers
         [HttpPost]
         public async Task<ActionResult<Candidato>> PostCandidato(Candidato candidato)
         {
-            var eleccion = await _context.Elecciones.FindAsync(candidato.IdEleccion);
-            if (eleccion == null) return BadRequest("La elección no existe.");
+            try
+            {
+                candidato.Eleccion = null;
 
-            _context.Candidatos.Add(candidato);
-            await _context.SaveChangesAsync();
+                _context.Candidatos.Add(candidato);
+                await _context.SaveChangesAsync();
 
-            return CreatedAtAction(nameof(GetCandidato), new { id = candidato.IdCandidato }, candidato);
+                return CreatedAtAction(nameof(GetCandidato), new { id = candidato.IdCandidato }, candidato);
+            }
+            catch (Exception ex)
+            {
+                var mensajeError = ex.InnerException?.Message ?? ex.Message;
+                Console.WriteLine("DEBUG BASE DE DATOS: " + mensajeError);
+                return StatusCode(500, $"Error BD: {mensajeError}");
+            }
         }
 
         // DELETE: api/Candidatos/5
@@ -71,5 +79,6 @@ namespace voto.API.Controllers
 
             return NoContent();
         }
+
     }
 }

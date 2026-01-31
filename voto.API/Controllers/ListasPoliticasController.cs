@@ -41,12 +41,11 @@ namespace voto.API.Controllers
             return Ok(lista);
         }
 
-        // Agrega esto para solucionar el Error 405
         [HttpGet]
         public async Task<IActionResult> ListarTodas()
         {
             var listas = await _context.ListasPoliticas
-                .Include(l => l.Candidatos) // Carga los candidatos para las tarjetas
+                .Include(l => l.Candidatos) 
                 .AsNoTracking()
                 .ToListAsync();
 
