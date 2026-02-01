@@ -26,6 +26,7 @@ namespace voto.API.Controllers
 
             return await _context.Candidatos
                 .Include(c => c.Eleccion)
+                .Include(c => c.ListaPolitica)
                 .AsNoTracking()
                 .ToListAsync();
         }
@@ -36,6 +37,7 @@ namespace voto.API.Controllers
         {
             var candidato = await _context.Candidatos
                 .Include(c => c.Eleccion)
+                .Include(c => c.ListaPolitica)
                 .FirstOrDefaultAsync(c => c.IdCandidato == id);
 
             if (candidato == null) return NotFound();
@@ -47,6 +49,8 @@ namespace voto.API.Controllers
         [HttpPost]
         public async Task<ActionResult<Candidato>> PostCandidato(Candidato candidato)
         {
+            candidato.Eleccion = null;
+            candidato.ListaPolitica = null;
             try
             {
                 candidato.Eleccion = null;

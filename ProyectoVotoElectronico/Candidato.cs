@@ -5,6 +5,7 @@ using System.ComponentModel.DataAnnotations.Schema;
 
 namespace ProyectoVotoElectronico
 {
+    [Table("Candidatos")]
     public class Candidato
     {
         [Key]
@@ -17,6 +18,8 @@ namespace ProyectoVotoElectronico
 
         // Relacion con la Eleccion
         public int IdEleccion { get; set; }
+
+        [ForeignKey("IdEleccion")]
         public virtual Eleccion Eleccion { get; set; }
 
         // Relacion con la Lista 

@@ -60,6 +60,15 @@
                             <span asp-validation-for="Foto" class="text-danger small"></span>
                         </div>
 
+                        <div class="mb-3">
+                            <label class="form-label fw-bold">Lista Política</label>
+                            <select asp-for="ListaPoliticaId" class="form-select shadow-sm"
+                                    asp-items="ViewBag.ListasPoliticas" required>
+                                <option value="">-- Seleccione una Lista --</option>
+                            </select>
+                            <span asp-validation-for="ListaPoliticaId" class="text-danger"></span>
+                        </div>
+
                         <div class="d-grid mt-4">
                             <button type="submit" class="btn btn-primary btn-lg fw-bold rounded-pill shadow">
                                 GUARDAR CANDIDATO
@@ -92,6 +101,12 @@
             } else {
                 inputCargoManual.classList.add('d-none');
                 inputCargoManual.value = this.value;
+            }
+        });
+
+        document.querySelector('form').addEventListener('submit', function() {
+            if (selectCargo.value !== 'Otro') {
+                inputCargoManual.value = selectCargo.value;
             }
         });
     </script>

@@ -1,9 +1,10 @@
 ﻿using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
-using System.Security.Claims;
-using VotoElectronico.Seguro.Models;
 using System.Net.Http.Json; 
+using System.Security.Claims;
+using System.Text.Json;
+using VotoElectronico.Seguro.Models;
 
 [Authorize]
 public class VotacionController : Controller
@@ -32,14 +33,12 @@ public class VotacionController : Controller
         var client = _httpClientFactory.CreateClient("ApiVoto");
         var email = User.FindFirstValue(ClaimTypes.Email);
 
-        // Buscar al usuario en la API
         var userResponse = await client.GetAsync($"api/Usuarios/ByEmail/{email}");
         if (!userResponse.IsSuccessStatusCode) return View("ErrorUsuarioNoRegistrado");
 
         var usuarioApi = await userResponse.Content.ReadFromJsonAsync<System.Text.Json.JsonElement>();
-        int idUsuario = usuarioApi.GetProperty("idUsuario").GetInt32();
+        int idUsuario = usuarioApi.GetProperty("IdUsuario").GetInt32();
 
-        // Verificar si ya voto
         var yaVotoResponse = await client.GetAsync($"api/Votos/YaVoto/{idUsuario}/{idEleccion}");
         if (yaVotoResponse.IsSuccessStatusCode)
         {
@@ -47,7 +46,6 @@ public class VotacionController : Controller
             if (yaVoto) return View("YaVotaste");
         }
 
-        //listas y candidatos de la elección
         var listas = await client.GetFromJsonAsync<List<dynamic>>($"api/ListasPoliticas/eleccion/{idEleccion}");
 
         ViewBag.IdUsuario = idUsuario;
@@ -57,36 +55,42 @@ public class VotacionController : Controller
     }
 
     [HttpPost]
-    public async Task<IActionResult> RegistrarVoto(int idLista, int idUsuario, int idCandidato, int idEleccion)
+    public async Task<IActionResult> RegistrarVoto(int idUsuario, int idEleccion, int idLista, int idCandidato)
     {
+        if (idCandidato == 0)
+        {
+            TempData["MensajeError"] = "Error: La lista seleccionada no tiene un candidato válido.";
+            return RedirectToAction("Papeleta", new { idEleccion = idEleccion });
+        }
         var client = _httpClientFactory.CreateClient("ApiVoto");
 
-        var request = new
+        var nuevoVoto = new
         {
             IdUsuario = idUsuario,
             IdEleccion = idEleccion,
-            IdCandidato = idCandidato,
+            IdCandidato = idCandidato, 
             IdLista = idLista
         };
 
-        var response = await client.PostAsJsonAsync("api/Votos/EmitirVoto", request);
+        var response = await client.PostAsJsonAsync("api/Votos/EmitirVoto", nuevoVoto);
 
         if (response.IsSuccessStatusCode)
         {
-            var resultado = await response.Content.ReadFromJsonAsync<dynamic>();
-            TempData["VotoHash"] = resultado.GetProperty("comprobanteHash").GetString();
+            var resultado = await response.Content.ReadFromJsonAsync<JsonElement>();
+            TempData["VotoHash"] = resultado.GetProperty("comprobante").GetString();
+
             return RedirectToAction("Confirmacion");
         }
-
-        var errorReal = await response.Content.ReadAsStringAsync();
-        TempData["Error"] = $"Error al registrar: {errorReal}";
-
-        return RedirectToAction("Papeleta", new { idEleccion = idEleccion });
+        else
+        {
+            var errorMsg = await response.Content.ReadAsStringAsync();
+            TempData["MensajeError"] = "La API dice: " + errorMsg;
+            return RedirectToAction("Papeleta", new { idEleccion = idEleccion });
+        }
     }
 
     public IActionResult Confirmacion()
     {
-        ViewBag.Hash = TempData["VotoHash"];
         return View();
     }
 }

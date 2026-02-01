@@ -12,8 +12,8 @@ using voto;
 namespace voto.API.Migrations
 {
     [DbContext(typeof(APIContext))]
-    [Migration("20260128162115_ActualizarListaPoliticaCampos")]
-    partial class ActualizarListaPoliticaCampos
+    [Migration("20260131185807_MigracionInicialLimpia")]
+    partial class MigracionInicialLimpia
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
@@ -36,6 +36,9 @@ namespace voto.API.Migrations
                     b.Property<string>("Apellido")
                         .HasColumnType("text");
 
+                    b.Property<string>("Cargo")
+                        .HasColumnType("text");
+
                     b.Property<int?>("EleccionIdEleccion")
                         .HasColumnType("integer");
 
@@ -43,7 +46,12 @@ namespace voto.API.Migrations
                         .HasColumnType("text");
 
                     b.Property<int>("IdEleccion")
-                        .HasColumnType("integer");
+                        .HasColumnType("integer")
+                        .HasColumnName("IdEleccion");
+
+                    b.Property<int?>("IdLista")
+                        .HasColumnType("integer")
+                        .HasColumnName("IdLista");
 
                     b.Property<int?>("ListaPoliticaIdlista")
                         .HasColumnType("integer");
@@ -58,9 +66,13 @@ namespace voto.API.Migrations
 
                     b.HasIndex("EleccionIdEleccion");
 
+                    b.HasIndex("IdEleccion");
+
+                    b.HasIndex("IdLista");
+
                     b.HasIndex("ListaPoliticaIdlista");
 
-                    b.ToTable("Candidatos");
+                    b.ToTable("Candidatos", (string)null);
                 });
 
             modelBuilder.Entity("ProyectoVotoElectronico.Eleccion", b =>
@@ -264,6 +276,9 @@ namespace voto.API.Migrations
                     b.Property<int?>("IdLista")
                         .HasColumnType("integer");
 
+                    b.Property<int>("IdUsuario")
+                        .HasColumnType("integer");
+
                     b.HasKey("IdVoto");
 
                     b.HasIndex("IdCandidato");
@@ -277,15 +292,28 @@ namespace voto.API.Migrations
 
             modelBuilder.Entity("ProyectoVotoElectronico.Candidato", b =>
                 {
-                    b.HasOne("ProyectoVotoElectronico.Eleccion", "Eleccion")
+                    b.HasOne("ProyectoVotoElectronico.Eleccion", null)
                         .WithMany("Candidatos")
                         .HasForeignKey("EleccionIdEleccion");
+
+                    b.HasOne("ProyectoVotoElectronico.Eleccion", "Eleccion")
+                        .WithMany()
+                        .HasForeignKey("IdEleccion")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("ProyectoVotoElectronico.ListaPolitica", "ListaPolitica")
+                        .WithMany()
+                        .HasForeignKey("IdLista")
+                        .OnDelete(DeleteBehavior.SetNull);
 
                     b.HasOne("ProyectoVotoElectronico.ListaPolitica", null)
                         .WithMany("Candidatos")
                         .HasForeignKey("ListaPoliticaIdlista");
 
                     b.Navigation("Eleccion");
+
+                    b.Navigation("ListaPolitica");
                 });
 
             modelBuilder.Entity("ProyectoVotoElectronico.ListaPolitica", b =>

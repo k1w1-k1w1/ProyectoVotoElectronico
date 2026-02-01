@@ -39,8 +39,18 @@
                         </div>
 
                         <div class="mb-3">
+                            <label asp-for="Tipo" class="form-label fw-bold">Tipo de Elección</label>
+                            <select asp-for="Tipo" class="form-select">
+                                <option value="INDIVIDUAL">INDIVIDUAL (Candidatos sueltos)</option>
+                                <option value="PLANCHA">PLANCHA (Listas Políticas / Partidos)</option>
+                            </select>
+                            <span asp-validation-for="Tipo" class="text-danger small"></span>
+                        </div>
+
+                        <div class="mb-3">
                             <label asp-for="Estado" class="form-label fw-bold">Estado Inicial</label>
                             <select asp-for="Estado" class="form-select">
+                                <option value="CREADA">CREADA</option>
                                 <option value="PROGRAMADA">PROGRAMADA</option>
                                 <option value="ABIERTA">ABIERTA</option>
                             </select>

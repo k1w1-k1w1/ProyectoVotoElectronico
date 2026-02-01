@@ -20,5 +20,8 @@ namespace VotoElectronico.Seguro.Models
         [Required(ErrorMessage = "El cargo es obligatorio.")]
         public string Cargo { get; set; }
         public IFormFile? Foto { get; set; }
+        [Required(ErrorMessage = "Debe seleccionar una lista política.")]
+        [Display(Name = "Lista Política")]
+        public int ListaPoliticaId { get; set; }
     }
 }

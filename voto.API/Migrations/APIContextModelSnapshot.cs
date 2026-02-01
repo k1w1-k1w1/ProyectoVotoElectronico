@@ -43,10 +43,12 @@ namespace voto.API.Migrations
                         .HasColumnType("text");
 
                     b.Property<int>("IdEleccion")
-                        .HasColumnType("integer");
+                        .HasColumnType("integer")
+                        .HasColumnName("IdEleccion");
 
                     b.Property<int?>("IdLista")
-                        .HasColumnType("integer");
+                        .HasColumnType("integer")
+                        .HasColumnName("IdLista");
 
                     b.Property<int?>("ListaPoliticaIdlista")
                         .HasColumnType("integer");
@@ -61,9 +63,13 @@ namespace voto.API.Migrations
 
                     b.HasIndex("EleccionIdEleccion");
 
+                    b.HasIndex("IdEleccion");
+
+                    b.HasIndex("IdLista");
+
                     b.HasIndex("ListaPoliticaIdlista");
 
-                    b.ToTable("Candidatos");
+                    b.ToTable("Candidatos", (string)null);
                 });
 
             modelBuilder.Entity("ProyectoVotoElectronico.Eleccion", b =>
@@ -283,11 +289,22 @@ namespace voto.API.Migrations
 
             modelBuilder.Entity("ProyectoVotoElectronico.Candidato", b =>
                 {
-                    b.HasOne("ProyectoVotoElectronico.Eleccion", "Eleccion")
+                    b.HasOne("ProyectoVotoElectronico.Eleccion", null)
                         .WithMany("Candidatos")
                         .HasForeignKey("EleccionIdEleccion");
 
+                    b.HasOne("ProyectoVotoElectronico.Eleccion", "Eleccion")
+                        .WithMany()
+                        .HasForeignKey("IdEleccion")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
                     b.HasOne("ProyectoVotoElectronico.ListaPolitica", "ListaPolitica")
+                        .WithMany()
+                        .HasForeignKey("IdLista")
+                        .OnDelete(DeleteBehavior.SetNull);
+
+                    b.HasOne("ProyectoVotoElectronico.ListaPolitica", null)
                         .WithMany("Candidatos")
                         .HasForeignKey("ListaPoliticaIdlista");
 

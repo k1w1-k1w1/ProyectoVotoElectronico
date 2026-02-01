@@ -29,16 +29,16 @@ namespace voto.API.Controllers
             if (eleccion == null)
                 return BadRequest("La elección no existe.");
 
-            if (eleccion.Tipo.ToUpper() != "PLANCHA")
-                return BadRequest("Solo se pueden registrar listas en elecciones tipo PLANCHA.");
-
-            if (eleccion.Estado != "CREADA")
-                return BadRequest("No se pueden añadir listas a una elección que ya inició o finalizó.");
+            lista.Eleccion = null;
 
             _context.ListasPoliticas.Add(lista);
             await _context.SaveChangesAsync();
 
-            return Ok(lista);
+            var resultado = await _context.ListasPoliticas
+                .AsNoTracking()
+                .FirstOrDefaultAsync(l => l.Idlista == lista.Idlista);
+
+            return Ok(resultado);
         }
 
         [HttpGet]
@@ -52,14 +52,28 @@ namespace voto.API.Controllers
             return Ok(listas);
         }
 
-        // GET: api/ListasPoliticas/eleccion/5
         [HttpGet("eleccion/{idEleccion}")]
         public async Task<IActionResult> ObtenerPorEleccion(int idEleccion)
         {
             var listas = await _context.ListasPoliticas
-                .Include(l => l.Candidatos)
                 .Where(l => l.EleccionId == idEleccion)
-                .AsNoTracking()
+                .Select(l => new {
+                    l.Idlista,
+                    l.NombreLista,
+                    l.Descripcion,
+                    l.UrlLogo,
+                    l.EleccionId,
+
+                    Candidatos = _context.Candidatos
+                        .Where(c => c.IdLista == l.Idlista)
+                        .Select(c => new {
+                            c.IdCandidato,
+                            c.Nombre,
+                            c.Apellido,
+                            c.FotoUrl,
+                            c.Cargo
+                        }).ToList()
+                })
                 .ToListAsync();
 
             return Ok(listas);

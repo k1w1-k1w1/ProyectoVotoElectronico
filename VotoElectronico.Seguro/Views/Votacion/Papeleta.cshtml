@@ -4,6 +4,37 @@
     ViewData["Title"] = "Papeleta Electoral";
 }
 
+<style>
+    .candidatos-list {
+        max-height: 250px;
+        overflow-y: auto;
+        overflow-x: hidden;
+    }
+
+    .card:hover {
+        transform: translateY(-5px);
+        transition: all 0.3s ease;
+    }
+
+    .img-candidato {
+        width: 50px;
+        height: 50px;
+        object-fit: cover;
+        border: 2px solid #dc3545;
+    }
+</style>
+
+@if (TempData["MensajeError"] != null)
+{
+    <div class="container mt-3">
+        <div class="alert alert-warning alert-dismissible fade show shadow-sm border-0" role="alert">
+            <i class="bi bi-exclamation-triangle-fill me-2"></i>
+            <strong>Atención:</strong> @TempData["MensajeError"]
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        </div>
+    </div>
+}
+
 <div class="container mt-5">
     <h1 class="text-center mb-4 text-danger fw-bold">PAPELETA ELECTORAL</h1>
     <h5 class="text-center text-muted mb-4">Seleccione su opción de preferencia</h5>
@@ -14,33 +45,69 @@
         {
             <div class="col-md-4 mb-4">
                 <div class="card h-100 shadow border-0">
-                    <img src="@lista.GetProperty("urlLogo").GetString()" class="card-img-top p-3" style="max-height: 180px; object-fit: contain;">
+                    <img src="@lista.GetProperty("UrlLogo").GetString()" class="card-img-top p-3" style="max-height: 120px; object-fit: contain;">
 
-                    <div class="card-body text-center">
-                        <h5 class="card-title fw-bold text-danger">@lista.GetProperty("nombreLista").GetString()</h5>
-                        <p class="card-text text-muted small">@lista.GetProperty("descripcion").GetString()</p>
+                    <div class="card-body">
+                        <h5 class="card-title fw-bold text-danger text-center">@lista.GetProperty("NombreLista").GetString()</h5>
+
+                        <h6 class="fw-bold mb-3 border-bottom pb-2">Candidatos:</h6>
+                        <div class="candidatos-list">
+                            @{
+                                var candidatosProp = lista.GetProperty("Candidatos");
+                                int? idPrimerCandidato = null;
+
+                                if (candidatosProp.ValueKind == JsonValueKind.Array)
+                                {
+                                    foreach (var cand in candidatosProp.EnumerateArray())
+                                    {
+                                        int idObtenido = cand.GetProperty("IdCandidato").GetInt32();
+                                        string nombre = cand.GetProperty("Nombre").GetString();
+                                        string apellido = cand.GetProperty("Apellido").GetString();
+                                        string cargo = cand.GetProperty("Cargo").GetString();
+
+                                        string fotoPath = cand.GetProperty("FotoUrl").GetString() ?? "";
+                                        string rutaFinal = fotoPath.StartsWith("/") ? fotoPath : "/" + fotoPath;
+
+                                        if (idPrimerCandidato == null) idPrimerCandidato = idObtenido;
+
+                                        <div class="d-flex align-items-center mb-3 p-2 rounded border shadow-sm bg-white">
+                                            <img src="@rutaFinal"
+                                                 class="rounded-circle me-3"
+                                                 style="width: 55px; height: 55px; object-fit: cover; border: 2px solid #dc3545;"
+                                                 onerror="this.src='/img/default-user.png'">
+
+                                            <div>
+                                                <div class="fw-bold mb-0" style="font-size: 0.95rem; color: #333;">@nombre @apellido</div>
+                                                <div class="text-danger fw-bold" style="font-size: 0.75rem; text-transform: uppercase;">
+                                                    <i class="bi bi-person-badge-fill"></i> @cargo
+                                                </div>
+                                            </div>
+                                        </div>
+                                    }
+                                }
+                            }
+                        </div>
                     </div>
 
                     <div class="card-footer bg-transparent border-0 pb-4 text-center">
                         <form asp-controller="Votacion" asp-action="RegistrarVoto" method="post">
                             <input type="hidden" name="idUsuario" value="@ViewBag.IdUsuario" />
                             <input type="hidden" name="idEleccion" value="@ViewBag.IdEleccion" />
-                            <input type="hidden" name="idLista" value="@lista.GetProperty("idlista").GetInt32()" />
+                            <input type="hidden" name="idLista" value="@lista.GetProperty("Idlista").GetInt32()" />
+                            <input type="hidden" name="idCandidato" value="@idPrimerCandidato" />
 
-                            @{
-                                var candidatos = lista.GetProperty("candidatos").EnumerateArray();
-                                int idCand = 0;
-                                if (candidatos.MoveNext())
-                                {
-                                    idCand = candidatos.Current.GetProperty("idCandidato").GetInt32();
-                                }
+                            @if (idPrimerCandidato != null)
+                            {
+                                <button type="submit" class="btn btn-danger w-100 fw-bold rounded-pill">
+                                    <i class="bi bi-check-lg"></i> EMITIR VOTO
+                                </button>
                             }
-                            <input type="hidden" name="idCandidato" value="@idCand" />
-
-                            <button type="submit" class="btn btn-outline-danger w-100 fw-bold rounded-pill"
-                                    onclick="return confirm('¿Confirmar voto por @lista.GetProperty("nombreLista").GetString()?')">
-                                <i class="bi bi-check-lg"></i> VOTAR
-                            </button>
+                            else
+                            {
+                                <button type="button" class="btn btn-secondary w-100 fw-bold rounded-pill disabled">
+                                    LISTA INCOMPLETA
+                                </button>
+                            }
                         </form>
                     </div>
                 </div>

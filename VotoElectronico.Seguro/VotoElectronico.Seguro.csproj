@@ -33,4 +33,10 @@
 	  <Folder Include="wwwroot\uploads\logos\" />
 	</ItemGroup>
 
+	<ItemGroup>
+	  <Reference Include="ProyectoVotoElectronico">
+	    <HintPath>..\ProyectoVotoElectronico\bin\Debug\net8.0\ProyectoVotoElectronico.dll</HintPath>
+	  </Reference>
+	</ItemGroup>
+
 </Project>

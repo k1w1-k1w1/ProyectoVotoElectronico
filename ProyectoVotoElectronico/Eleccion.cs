@@ -14,8 +14,8 @@ namespace ProyectoVotoElectronico
         public string Descripcion { get; set; }
         public DateTime FechaInicio { get; set; }
         public DateTime FechaFin { get; set; }
-        public string Tipo { get; set; } // Nominal / Plancha
-        public string Estado { get; set; } // CREADA, ABIERTA, CERRADA
+        public string Tipo { get; set; } 
+        public string Estado { get; set; } 
 
         public List<Candidato> Candidatos { get; set; }
         public List<Voto> Votos { get; set; }

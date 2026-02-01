@@ -41,7 +41,14 @@
                             @item.FechaFin.ToString("dd/MM/yyyy HH:mm")
                         </td>
                         <td class="text-center">
-                            @* Botón Cerrar *@
+                            @if (item.Tipo?.ToUpper() == "PLANCHA" && item.Estado == "CREADA")
+                            {
+                                <a asp-controller="Listas" asp-action="Crear" asp-route-idEleccion="@item.IdEleccion"
+                                   class="btn btn-outline-primary btn-sm rounded-pill me-1">
+                                    <i class="bi bi-person-lines-fill"></i> + Lista
+                                </a>
+                            }
+
                             @if (item.Estado != "CERRADA")
                             {
                                 <form asp-action="Cerrar" asp-route-id="@item.IdEleccion" method="post" class="d-inline">
@@ -52,7 +59,6 @@
                                 </form>
                             }
 
-                            @* Botón Eliminar *@
                             <form asp-action="Eliminar" asp-route-id="@item.IdEleccion" method="post" class="d-inline">
                                 <button type="submit" class="btn btn-danger btn-sm rounded-pill"
                                         onclick="return confirm('¿Está seguro de eliminar esta elección? Esta acción no se puede deshacer.')">

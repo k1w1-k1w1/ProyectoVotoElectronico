@@ -1,0 +1,71 @@
+﻿@model IEnumerable<ProyectoVotoElectronico.Candidato>
+
+<div class="container mt-4">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h2 class="fw-bold" style="color: #CC0000;">Candidatos Registrados</h2>
+        <a asp-action="Crear" class="btn btn-danger rounded-pill px-4 fw-bold">
+            Nuevo Candidato
+        </a>
+    </div>
+
+    @if (TempData["Mensaje"] != null)
+    {
+        <div class="alert alert-success border-0 shadow-sm">
+            <i class="bi bi-check-circle-fill me-2"></i> @TempData["Mensaje"]
+        </div>
+    }
+
+    <div class="card border-0 shadow-sm">
+        <div class="table-responsive">
+            <table class="table align-middle mb-0 bg-white">
+                <thead class="bg-light">
+                    <tr>
+                        <th class="ps-4" style="font-size: 0.9rem; color: #444;">Foto</th>
+                        <th style="font-size: 0.9rem; color: #444;">Nombre del Candidato</th>
+                        <th style="font-size: 0.9rem; color: #444;">Cargo / Propuesta</th>
+                        <th class="text-center" style="font-size: 0.9rem; color: #444;">Acciones</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var item in Model)
+                    {
+                        <tr>
+                            <td class="ps-4">
+                                <img src="@item.FotoUrl"
+                                     class="rounded-circle border"
+                                     style="width: 45px; height: 45px; object-fit: cover;"
+                                     onerror="this.src='/img/default-user.png';" />
+                            </td>
+                            <td>
+                                <div class="fw-bold text-dark">@item.Nombre @item.Apellido</div>
+                                <div class="text-muted small">@item.ListaPolitica?.NombreLista</div>
+                            </td>
+                            <td>
+                                <div class="text-dark">@item.Cargo</div>
+                                <div class="text-muted small text-truncate" style="max-width: 250px;">
+                                    @item.Propuesta
+                                </div>
+                            </td>
+                            <td class="text-center">
+                                <form asp-action="Delete" asp-route-id="@item.IdCandidato" method="post"
+                                      onsubmit="return confirm('¿Está seguro de eliminar a @item.Nombre?')">
+                                    <button type="submit" class="btn btn-outline-danger btn-sm px-3">
+                                        Eliminar
+                                    </button>
+                                </form>
+                            </td>
+                        </tr>
+                    }
+                    @if (!Model.Any())
+                    {
+                        <tr>
+                            <td colspan="4" class="text-center py-4 text-muted">
+                                No hay candidatos registrados actualmente.
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>

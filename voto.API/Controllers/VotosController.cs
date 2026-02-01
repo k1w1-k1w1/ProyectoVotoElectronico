@@ -46,7 +46,6 @@ namespace voto.API.Controllers
                 };
                 _context.RegistroVotaciones.Add(registro);
 
-                // Crear el Voto Anónimo con Hash de Inmutabilidad
                 string semilla = $"{request.IdEleccion}-{request.IdCandidato ?? request.IdLista}-{Guid.NewGuid()}";
                 string hashInmutable = CalcularHash(semilla);
 
@@ -56,7 +55,7 @@ namespace voto.API.Controllers
                     IdCandidato = request.IdCandidato,
                     IdLista = request.IdLista,
                     FechaHora = DateTime.UtcNow,
-                    HashVoto = hashInmutable // Requisito de seguridad
+                    HashVoto = hashInmutable 
                 };
                 _context.Votos.Add(nuevoVoto);
 
@@ -77,7 +76,6 @@ namespace voto.API.Controllers
         [HttpGet("YaVoto/{idUsuario}/{idEleccion}")]
         public async Task<IActionResult> VerificarVoto(int idUsuario, int idEleccion)
         {
-            // Ahora validamos si el usuario ya votó en ESTA elección específica
             var existe = await _context.RegistroVotaciones
                                 .AnyAsync(v => v.IdUsuario == idUsuario && v.IdEleccion == idEleccion);
             return Ok(existe);

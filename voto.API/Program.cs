@@ -1,6 +1,8 @@
 ﻿using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
+using System.Text.Json.Serialization;
 using voto;
+using Microsoft.Extensions.FileProviders;
 
 namespace voto.API
 {
@@ -17,16 +19,19 @@ namespace voto.API
                 options.UseNpgsql(builder.Configuration.GetConnectionString("APIContext") ??
                 throw new InvalidOperationException("Connection string 'APIContext' not found.")));
 
-            // Add services to the container.
+            builder.Services.AddControllers()
+                .AddJsonOptions(options =>
+                {
+                    options.JsonSerializerOptions.ReferenceHandler = ReferenceHandler.IgnoreCycles;
+                    options.JsonSerializerOptions.PropertyNameCaseInsensitive = true;
+                    options.JsonSerializerOptions.PropertyNamingPolicy = null;
+                });
 
-            builder.Services.AddControllers();
-            // Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
             builder.Services.AddEndpointsApiExplorer();
             builder.Services.AddSwaggerGen();
 
             var app = builder.Build();
 
-            // Configure the HTTP request pipeline.
             if (app.Environment.IsDevelopment())
             {
                 app.UseSwagger();
@@ -35,11 +40,11 @@ namespace voto.API
 
             app.UseCors(policy => policy.AllowAnyHeader().AllowAnyMethod().AllowAnyOrigin());
 
-            //app.UseHttpsRedirection();
+            app.UseStaticFiles();
 
+            
             app.UseAuthorization();
-
-            app.MapControllers();      
+            app.MapControllers();
 
             app.Run();
         }
