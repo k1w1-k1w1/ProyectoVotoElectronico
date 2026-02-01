@@ -1,11 +1,12 @@
 ﻿using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
+using ProyectoVotoElectronico;
 using System;
 using System.Linq;
 using System.Security.Cryptography;
 using System.Text;
+using System.Text.Json.Serialization;
 using System.Threading.Tasks;
-using ProyectoVotoElectronico;
 
 namespace voto.API.Controllers
 {
@@ -91,7 +92,58 @@ namespace voto.API.Controllers
                 return builder.ToString();
             }
         }
+
+        [HttpGet("Resultados/{idEleccion}")]
+        public async Task<IActionResult> ObtenerResultados(int idEleccion)
+        {
+            var resultados = await _context.Votos
+                .Where(v => v.IdEleccion == idEleccion)
+                .GroupBy(v => v.IdLista)
+                .Select(g => new
+                {
+                    NombreLista = _context.ListasPoliticas
+                                    .Where(l => l.Idlista == g.Key)
+                                    .Select(l => l.NombreLista)
+                                    .FirstOrDefault() ?? "Voto en Blanco",
+                    TotalVotos = g.Count()
+                })
+                .OrderByDescending(r => r.TotalVotos)
+                .ToListAsync();
+
+            return Ok(resultados);
+        }
+
+        private List<ResultadoConEscaños> CalcularWebster(List<ResultadoConEscaños> resultados, int escañosDisponibles)
+        {
+            var cocientes = new List<CocienteCalculado>();
+
+            foreach (var lista in resultados)
+            {
+                for (int i = 0; i < escañosDisponibles; i++)
+                {
+                    double divisor = (2 * i) + 1; 
+                    cocientes.Add(new CocienteCalculado
+                    {
+                        NombreLista = lista.NombreLista,
+                        Valor = (double)lista.TotalVotos / divisor
+                    });
+                }
+            }
+
+            var listaGanadores = cocientes
+                .OrderByDescending(c => c.Valor)
+                .Take(escañosDisponibles)
+                .Select(c => c.NombreLista)
+                .ToList();
+
+
+            return resultados;
+        }
+
+
+
     }
+
 
     public class VotoRequest
     {
@@ -99,5 +151,20 @@ namespace voto.API.Controllers
         public int IdEleccion { get; set; }
         public int? IdCandidato { get; set; } 
         public int? IdLista { get; set; }    
+    }
+
+    public class ResultadoConEscaños
+    {
+        [JsonPropertyName("nombreLista")] 
+        public string NombreLista { get; set; }
+
+        [JsonPropertyName("totalVotos")]
+        public int TotalVotos { get; set; }
+    }
+
+    public class CocienteCalculado
+    {
+        public string NombreLista { get; set; }
+        public double Valor { get; set; }
     }
 }

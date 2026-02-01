@@ -5,7 +5,7 @@
 
 <div class="container mt-5">
     <div class="text-center mb-5">
-        <h1 class="display-4 fw-bold text-primary">Procesos Electorales UTN</h1>
+        <h1 class="display-4 fw-bold text-primary">Procesos Electorales</h1>
         <p class="lead text-muted">Seleccione la elección en la que desea participar</p>
     </div>
 
@@ -29,8 +29,13 @@
                             <p class="card-text small text-muted">@e.Descripcion</p>
 
                             <a asp-action="Papeleta" asp-route-idEleccion="@e.IdEleccion"
-                               class="btn btn-danger w-100 rounded-pill shadow-sm">
+                               class="btn btn-danger w-100 rounded-pill shadow-sm mb-2">
                                 <i class="bi bi-pencil-square"></i> Ingresar a Votar
+                            </a>
+
+                            <a asp-action="Resultados" asp-route-idEleccion="@e.IdEleccion"
+                               class="btn btn-outline-primary w-100 rounded-pill shadow-sm">
+                                <i class="bi bi-bar-chart-fill"></i> Ver Resultados
                             </a>
                         </div>
                     </div>

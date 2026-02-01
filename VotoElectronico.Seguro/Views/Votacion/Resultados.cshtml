@@ -1,0 +1,192 @@
+﻿@{
+    ViewData["Title"] = "Resultados Oficiales";
+}
+
+<div class="container mt-5">
+    <div class="text-center mb-4 d-print-none">
+        <h2 class="fw-bold text-danger">TABLERO DE RESULTADOS</h2>
+        <p class="text-muted">Conteo de votos en tiempo real</p>
+
+        <button id="btnPdf" onclick="generarActaOficial()" class="btn btn-dark btn-lg shadow-sm" disabled>
+            <i class="bi bi-file-earmark-check-fill"></i> GENERANDO DATOS...
+        </button>
+    </div>
+
+    <div class="row justify-content-center d-print-none">
+        <div class="col-md-10">
+            <div class="card shadow border-0 p-4 mb-4">
+                <canvas id="chartVotos" style="max-height: 350px;"></canvas>
+            </div>
+
+            <div class="card shadow border-0 p-4">
+                <table class="table table-hover align-middle">
+                    <thead class="table-dark">
+                        <tr>
+                            <th>Lista Política</th>
+                            <th class="text-center">Votos</th>
+                            <th class="text-center">Porcentaje</th>
+                        </tr>
+                    </thead>
+                    <tbody id="tablaWeb"></tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <div id="plantilla-acta" style="display: none; background-color: white;">
+        <div class="p-5" style="font-family: 'Times New Roman', serif; color: black; line-height: 1.6;">
+            <div class="text-center mb-5">
+                <h2 style="margin: 0; font-size: 24px;">UNIVERSIDAD TÉCNICA DEL NORTE</h2>
+                <h3 style="margin: 5px 0; font-size: 18px;">TRIBUNAL ELECTORAL</h3>
+                <hr style="border: 1px solid black;" />
+                <h4 style="text-decoration: underline; margin-top: 20px;">ACTA DE ESCRUTINIO FINAL</h4>
+            </div>
+
+            <p><strong>FECHA DE EMISIÓN:</strong> <span id="pdf-fecha"></span></p>
+            <p><strong>PROCESO:</strong> Elección #@ViewBag.IdEleccion</p>
+
+            <p style="text-align: justify; margin: 20px 0;">
+                Se certifica que, tras el cierre del proceso de votación electrónica, se han obtenido los siguientes resultados oficiales:
+            </p>
+
+            <table border="1" style="width: 100%; border-collapse: collapse; margin: 20px 0; text-align: center;">
+                <thead style="background-color: #f2f2f2;">
+                    <tr>
+                        <th style="padding: 12px; text-align: left;">LISTA POLÍTICA / CANDIDATO</th>
+                        <th style="padding: 12px; width: 25%;">VOTOS TOTALES</th>
+                        <th style="padding: 12px; width: 25%;">PORCENTAJE</th>
+                    </tr>
+                </thead>
+                <tbody id="pdf-tabla-body"></tbody>
+                <tfoot style="font-weight: bold; background-color: #f9f9f9;">
+                    <tr>
+                        <td style="padding: 12px; text-align: right;">TOTAL GENERAL:</td>
+                        <td id="pdf-total-votos" style="padding: 12px;"></td>
+                        <td style="padding: 12px;">100.0%</td>
+                    </tr>
+                </tfoot>
+            </table>
+
+            <div style="margin-top: 80px; display: flex; justify-content: space-around; text-align: center;">
+                <div style="width: 220px;">
+                    <br /><br />
+                    <hr style="border: 0.5px solid black;" />
+                    <p style="font-size: 14px; font-weight: bold;">PRESIDENTE DEL TRIBUNAL</p>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script>
+        const idEleccion = @ViewBag.IdEleccion;
+        const apiUrl = `http://localhost:5294/api/Votos/Resultados/${idEleccion}`;
+        let chartVotos;
+        let datosGlobales = [];
+
+        async function cargarResultados() {
+            try {
+                const response = await fetch(apiUrl);
+                datosGlobales = await response.json();
+
+                if(datosGlobales.length > 0) {
+                    document.getElementById('btnPdf').disabled = false;
+                    document.getElementById('btnPdf').innerHTML = '<i class="bi bi-printer"></i> GENERAR ACTA (PDF)';
+                }
+
+                actualizarGrafica(datosGlobales);
+                actualizarTablaWeb(datosGlobales);
+            } catch (error) {
+                console.error("Error:", error);
+                document.getElementById('btnPdf').innerText = "Error al cargar datos";
+            }
+        }
+
+        function actualizarGrafica(datos) {
+            const labels = datos.map(d => d.NombreLista);
+            const valores = datos.map(d => d.TotalVotos);
+
+            if (chartVotos) {
+                chartVotos.data.labels = labels;
+                chartVotos.data.datasets[0].data = valores;
+                chartVotos.update();
+            } else {
+                const ctx = document.getElementById('chartVotos').getContext('2d');
+                chartVotos = new Chart(ctx, {
+                    type: 'bar',
+                    data: {
+                        labels: labels,
+                        datasets: [{
+                            label: 'Votos',
+                            data: valores,
+                            backgroundColor: 'rgba(204, 0, 0, 0.8)',
+                            borderColor: '#CC0000',
+                            borderWidth: 1
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        scales: { y: { beginAtZero: true, ticks: { stepSize: 1 } } },
+                        plugins: { legend: { display: false } }
+                    }
+                });
+            }
+        }
+
+        function actualizarTablaWeb(datos) {
+            const contenedor = document.getElementById('tablaWeb');
+            const total = datos.reduce((sum, item) => sum + (item.TotalVotos || 0), 0);
+
+            contenedor.innerHTML = datos.map(d => {
+                const porc = total > 0 ? ((d.TotalVotos / total) * 100).toFixed(1) : 0;
+                return `<tr>
+                    <td class="fw-bold">${d.NombreLista}</td>
+                    <td class="text-center">${d.TotalVotos}</td>
+                    <td>
+                        <div class="progress" style="height: 12px;">
+                            <div class="progress-bar bg-success" style="width: ${porc}%"></div>
+                        </div>
+                        <small class="fw-bold text-success">${porc}%</small>
+                    </td>
+                </tr>`;
+            }).join('');
+        }
+
+        function generarActaOficial() {
+            const acta = document.getElementById('plantilla-acta');
+
+            document.getElementById('pdf-fecha').innerText = new Date().toLocaleString();
+            const total = datosGlobales.reduce((sum, item) => sum + (item.TotalVotos || 0), 0);
+            document.getElementById('pdf-total-votos').innerText = total;
+
+            const tbody = document.getElementById('pdf-tabla-body');
+            tbody.innerHTML = datosGlobales.map(d => `
+                <tr>
+                    <td style="padding: 12px; text-align: left; border: 1px solid black;">${d.NombreLista}</td>
+                    <td style="padding: 12px; border: 1px solid black;">${d.TotalVotos}</td>
+                    <td style="padding: 12px; border: 1px solid black;">${total > 0 ? ((d.TotalVotos/total)*100).toFixed(2) : 0}%</td>
+                </tr>
+            `).join('');
+
+            acta.style.display = 'block'; 
+
+            const opciones = {
+                margin: 1.5,
+                filename: `Acta_Resultados_Eleccion_${idEleccion}.pdf`,
+                image: { type: 'jpeg', quality: 1 },
+                html2canvas: { scale: 3, useCORS: true },
+                jsPDF: { unit: 'cm', format: 'a4', orientation: 'portrait' }
+            };
+
+            html2pdf().set(opciones).from(acta).save().then(() => {
+                acta.style.display = 'none'; 
+            });
+        }
+
+        cargarResultados();
+        setInterval(cargarResultados, 15000);
+    </script>
+}

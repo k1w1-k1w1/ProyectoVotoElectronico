@@ -93,4 +93,10 @@ public class VotacionController : Controller
     {
         return View();
     }
+
+    public IActionResult Resultados(int idEleccion)
+    {
+        ViewBag.IdEleccion = idEleccion;
+        return View();
+    }
 }
