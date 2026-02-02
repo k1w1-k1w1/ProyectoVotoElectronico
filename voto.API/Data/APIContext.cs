@@ -1,4 +1,5 @@
-﻿using Microsoft.EntityFrameworkCore;
+﻿using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore;
 using ProyectoVotoElectronico;
 using System;
 using System.Collections.Generic;
@@ -7,10 +8,9 @@ using System.Threading.Tasks;
 using voto;
 using VotoElectronico.Api.Models;
 
-
 namespace voto
 {
-    public class APIContext : DbContext
+    public class APIContext : IdentityDbContext
     {
         public APIContext (DbContextOptions<APIContext> options)
             : base(options)

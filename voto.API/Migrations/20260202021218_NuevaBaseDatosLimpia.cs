@@ -7,7 +7,7 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 namespace voto.API.Migrations
 {
     /// <inheritdoc />
-    public partial class MigracionInicialLimpia : Migration
+    public partial class NuevaBaseDatosLimpia : Migration
     {
         /// <inheritdoc />
         protected override void Up(MigrationBuilder migrationBuilder)

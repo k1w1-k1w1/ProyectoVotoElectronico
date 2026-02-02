@@ -12,8 +12,8 @@ using voto;
 namespace voto.API.Migrations
 {
     [DbContext(typeof(APIContext))]
-    [Migration("20260131185807_MigracionInicialLimpia")]
-    partial class MigracionInicialLimpia
+    [Migration("20260202025330_SoporteIdentity")]
+    partial class SoporteIdentity
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)

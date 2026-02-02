@@ -13,6 +13,16 @@ namespace voto.API
             AppContext.SetSwitch("Npgsql.EnableLegacyTimestampBehavior", true);
             var builder = WebApplication.CreateBuilder(args);
 
+            builder.Services.AddCors(options =>
+            {
+                options.AddPolicy("PermitirTodo", policy =>
+                {
+                    policy.AllowAnyOrigin()
+                          .AllowAnyHeader()
+                          .AllowAnyMethod();
+                });
+            });
+
             builder.Services.AddScoped<EmailService>();
 
             builder.Services.AddDbContext<APIContext>(options =>
@@ -32,7 +42,7 @@ namespace voto.API
 
             var app = builder.Build();
 
-            if (app.Environment.IsDevelopment())
+            //if (app.Environment.IsDevelopment())
             {
                 app.UseSwagger();
                 app.UseSwaggerUI();
@@ -42,7 +52,8 @@ namespace voto.API
 
             app.UseStaticFiles();
 
-            
+            app.UseCors("PermitirTodo");
+
             app.UseAuthorization();
             app.MapControllers();
 
