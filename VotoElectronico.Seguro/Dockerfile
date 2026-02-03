@@ -5,8 +5,13 @@ COPY ["VotoElectronico.Seguro/VotoElectronico.Seguro.csproj", "VotoElectronico.S
 COPY ["ProyectoVotoElectronico/ProyectoVotoElectronico.csproj", "ProyectoVotoElectronico/"]
 
 RUN dotnet restore "VotoElectronico.Seguro/VotoElectronico.Seguro.csproj"
+RUN dotnet restore "ProyectoVotoElectronico/ProyectoVotoElectronico.csproj"
 
 COPY . .
+
+WORKDIR "/src/ProyectoVotoElectronico"
+RUN dotnet build -c Release
+
 WORKDIR "/src/VotoElectronico.Seguro"
 RUN dotnet publish -c Release -o /app/publish
 
