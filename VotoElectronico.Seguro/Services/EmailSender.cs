@@ -8,7 +8,7 @@ namespace VotoElectronico.Seguro.Services
     {
         public async Task SendEmailAsync(string email, string subject, string htmlMessage)
         {
-            var apiKey = "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";
+            var apiKey = Environment.GetEnvironmentVariable("SENDGRID_API_KEY");
             var client = new SendGridClient(apiKey);
 
             // Importante: usar el correo que verificaste en la imagen anterior
@@ -27,8 +27,5 @@ namespace VotoElectronico.Seguro.Services
             }
         }
 
-
-        //
-        //
     }
 }
