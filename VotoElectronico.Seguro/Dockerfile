@@ -1,36 +1,30 @@
-# 1. Etapa de Construcción (Build)
 FROM mcr.microsoft.com/dotnet/sdk:8.0 AS build
 WORKDIR /src
 
-
+# 1. Copiamos los archivos de proyecto
+# Ponemos ambos al mismo nivel inicial para que se reconozcan
 COPY ["VotoElectronico.Seguro/VotoElectronico.Seguro.csproj", "VotoElectronico.Seguro/"]
 COPY ["ProyectoVotoElectronico/ProyectoVotoElectronico.csproj", "ProyectoVotoElectronico/"]
 
-# Restauramos las dependencias de ambos proyectos
+# 2. Restauramos
 RUN dotnet restore "VotoElectronico.Seguro/VotoElectronico.Seguro.csproj"
-RUN dotnet restore "ProyectoVotoElectronico/ProyectoVotoElectronico.csproj"
 
-# Copiamos el resto de los archivos del código fuente
+# 3. Copiamos TODO el código fuente del repositorio a /src
 COPY . .
 
-# Construimos la biblioteca de modelos primero para asegurar que la DLL exista
-WORKDIR "/src/ProyectoVotoElectronico"
-RUN dotnet build "ProyectoVotoElectronico.csproj" -c Release
+# 4. PASO CLAVE: Compilamos la solución completa desde la RAÍZ 
+# En lugar de entrar a carpetas, compilamos desde donde se ve todo
+RUN dotnet build "VotoElectronico.Seguro/VotoElectronico.Seguro.csproj" -c Release
 
-# Publicamos el proyecto Web (el Front-end)
-WORKDIR "/src/VotoElectronico.Seguro"
-RUN dotnet publish "VotoElectronico.Seguro.csproj" -c Release -o /app/publish /p:UseAppHost=false
+# 5. Publicamos
+RUN dotnet publish "VotoElectronico.Seguro/VotoElectronico.Seguro.csproj" -c Release -o /app/publish /p:UseAppHost=false
 
-# 2. Etapa Final (Runtime)
+# --- Etapa Final ---
 FROM mcr.microsoft.com/dotnet/aspnet:8.0
 WORKDIR /app
-
-# Copiamos solo los archivos publicados desde la etapa de construcción
 COPY --from=build /app/publish .
 
-# Configuramos el puerto que usa Render (10000)
 ENV ASPNETCORE_URLS=http://+:10000
 EXPOSE 10000
 
-# Iniciamos la aplicación usando el DLL del proyecto Web
 ENTRYPOINT ["dotnet", "VotoElectronico.Seguro.dll"]
