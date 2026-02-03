@@ -34,9 +34,7 @@
 	</ItemGroup>
 
 	<ItemGroup>
-	  <Reference Include="ProyectoVotoElectronico">
-	    <HintPath>..\ProyectoVotoElectronico\bin\Debug\net8.0\ProyectoVotoElectronico.dll</HintPath>
-	  </Reference>
+		<ProjectReference Include="../ProyectoVotoElectronico/ProyectoVotoElectronico.csproj" />
 	</ItemGroup>
 
 </Project>
