@@ -1,6 +1,8 @@
 ﻿using Microsoft.AspNetCore.Identity.UI.Services;
-using System.Net;
-using System.Net.Mail;
+using SendGrid;
+using SendGrid.Helpers.Mail;
+using System;
+using System.Threading.Tasks;
 
 namespace VotoElectronico.Seguro.Services
 {
@@ -8,34 +10,24 @@ namespace VotoElectronico.Seguro.Services
     {
         public async Task SendEmailAsync(string email, string subject, string htmlMessage)
         {
+            // Reemplaza esto con la clave que copiaste de SendGrid
+            var apiKey = "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";
+            var client = new SendGridClient(apiKey);
+
+            // El emisor debe ser el mismo que verificaste en SendGrid
+            var from = new EmailAddress("patricioquiguango.08@gmail.com", "Sistema de Voto Electrónico");
+            var to = new EmailAddress(email);
+            var msg = MailHelper.CreateSingleEmail(from, to, subject, "", htmlMessage);
+
             try
             {
-                var correoEmisor = "votoelectronicoutn@gmail.com";
-                var claveAplicacion = "tanp bcqm ihix pqnd";
+                var response = await client.SendEmailAsync(msg);
 
-                var smtpClient = new SmtpClient("smtp.gmail.com")
-                {
-                    Port = 2525,
-                    UseDefaultCredentials = false,
-                    Credentials = new NetworkCredential(correoEmisor, claveAplicacion),
-                    EnableSsl = true,
-                };
-
-                var mailMessage = new MailMessage
-                {
-                    From = new MailAddress(correoEmisor, "Sistema de Voto Electrónico"),
-                    Subject = subject,
-                    Body = htmlMessage,
-                    IsBodyHtml = true,
-                };
-
-                mailMessage.To.Add(email);
-
-                await smtpClient.SendMailAsync(mailMessage);
+                Console.WriteLine($"Status de SendGrid: {response.StatusCode}");
             }
             catch (Exception ex)
             {
-                Console.WriteLine($"Error de correo (SMTP bloqueado): {ex.Message}");
+                Console.WriteLine($"Error crítico de SendGrid: {ex.Message}");
             }
         }
     }
