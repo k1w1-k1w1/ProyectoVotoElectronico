@@ -11,18 +11,19 @@ namespace VotoElectronico.Seguro.Services
             var apiKey = "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";
             var client = new SendGridClient(apiKey);
 
-            var from = new EmailAddress("patricioquiguango.08@gmail.com", "Sistema de Voto UTN");
+            // Importante: usar el correo que verificaste en la imagen anterior
+            var from = new EmailAddress("patricioquiguango.08@gmail.com", "Sistema de Voto Electronico");
             var to = new EmailAddress(email);
             var msg = MailHelper.CreateSingleEmail(from, to, subject, "", htmlMessage);
 
             try
             {
                 var response = await client.SendEmailAsync(msg);
-                Console.WriteLine($"SendGrid respondió con: {response.StatusCode}");
+                Console.WriteLine($"SendGrid Response: {response.StatusCode}");
             }
             catch (Exception ex)
             {
-                Console.WriteLine($"Error al enviar con SendGrid: {ex.Message}");
+                Console.WriteLine($"Error de envío API: {ex.Message}");
             }
         }
     }
