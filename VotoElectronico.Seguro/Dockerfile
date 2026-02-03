@@ -1,29 +1,36 @@
+# 1. Etapa de Construcción (Build)
 FROM mcr.microsoft.com/dotnet/sdk:8.0 AS build
 WORKDIR /src
 
-# 1. Copiamos la solución y los proyectos para restaurar dependencias
-# Esto asegura que todas las rutas relativas funcionen
+
 COPY ["VotoElectronico.Seguro/VotoElectronico.Seguro.csproj", "VotoElectronico.Seguro/"]
 COPY ["ProyectoVotoElectronico/ProyectoVotoElectronico.csproj", "ProyectoVotoElectronico/"]
 
-# 2. Restauramos el proyecto principal (esto restaura automáticamente las dependencias locales)
+# Restauramos las dependencias de ambos proyectos
 RUN dotnet restore "VotoElectronico.Seguro/VotoElectronico.Seguro.csproj"
+RUN dotnet restore "ProyectoVotoElectronico/ProyectoVotoElectronico.csproj"
 
-# 3. Copiamos TODO el contenido del repositorio
+# Copiamos el resto de los archivos del código fuente
 COPY . .
 
-# 4. Publicamos directamente el proyecto Web
-# Al estar en la raíz (/src), .NET encontrará "ProyectoVotoElectronico" sin problemas
+# Construimos la biblioteca de modelos primero para asegurar que la DLL exista
+WORKDIR "/src/ProyectoVotoElectronico"
+RUN dotnet build "ProyectoVotoElectronico.csproj" -c Release
+
+# Publicamos el proyecto Web (el Front-end)
 WORKDIR "/src/VotoElectronico.Seguro"
 RUN dotnet publish "VotoElectronico.Seguro.csproj" -c Release -o /app/publish /p:UseAppHost=false
 
-# --- Imagen de Ejecución ---
+# 2. Etapa Final (Runtime)
 FROM mcr.microsoft.com/dotnet/aspnet:8.0
 WORKDIR /app
+
+# Copiamos solo los archivos publicados desde la etapa de construcción
 COPY --from=build /app/publish .
 
-# Render usa el puerto 10000 por defecto
+# Configuramos el puerto que usa Render (10000)
 ENV ASPNETCORE_URLS=http://+:10000
 EXPOSE 10000
 
+# Iniciamos la aplicación usando el DLL del proyecto Web
 ENTRYPOINT ["dotnet", "VotoElectronico.Seguro.dll"]
