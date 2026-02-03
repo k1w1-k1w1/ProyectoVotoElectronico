@@ -28,12 +28,17 @@ namespace VotoElectronico.Seguro.Services
             {
                 var response = await client.SendEmailAsync(msg);
 
-                Console.WriteLine($"[EmailSender] Estado de respuesta SendGrid: {response.StatusCode}");
+                var body = await response.Body.ReadAsStringAsync();
+
+                Console.WriteLine($"[EmailSender] Status: {response.StatusCode}");
+                Console.WriteLine($"[EmailSender] Body: {body}");
             }
             catch (Exception ex)
             {
                 Console.WriteLine($"[EmailSender] Error crítico al enviar correo: {ex.Message}");
             }
+
+
         }
     }
 }
