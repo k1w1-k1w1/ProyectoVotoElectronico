@@ -22,7 +22,7 @@ namespace VotoElectronico.Seguro
 
             builder.Services.AddDefaultIdentity<ApplicationUser>(options =>
             {
-                options.SignIn.RequireConfirmedAccount = false;
+                options.SignIn.RequireConfirmedAccount = true;
   
                 //2FA
                 options.Tokens.AuthenticatorTokenProvider = TokenOptions.DefaultAuthenticatorProvider;
@@ -35,7 +35,7 @@ namespace VotoElectronico.Seguro
 
             builder.Services.AddHttpClient("ApiVoto", client =>
             {
-                client.BaseAddress = new Uri("https://elecciones-12g6.onrender.com/"); // PUERTO DE API
+                client.BaseAddress = new Uri("https://elecciones-12g6.onrender.com"); // PUERTO DE API
             });
 
             builder.Services.AddTransient<IEmailSender, EmailSender>();

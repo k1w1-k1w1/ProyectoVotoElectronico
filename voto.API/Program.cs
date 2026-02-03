@@ -42,18 +42,14 @@ namespace voto.API
 
             var app = builder.Build();
 
-            //if (app.Environment.IsDevelopment())
+            app.UseCors("PermitirTodo");
+
             {
                 app.UseSwagger();
                 app.UseSwaggerUI();
             }
 
-            app.UseCors(policy => policy.AllowAnyHeader().AllowAnyMethod().AllowAnyOrigin());
-
             app.UseStaticFiles();
-
-            app.UseCors("PermitirTodo");
-
             app.UseAuthorization();
             app.MapControllers();
 

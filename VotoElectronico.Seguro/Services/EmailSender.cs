@@ -10,13 +10,12 @@ namespace VotoElectronico.Seguro.Services
         {
             try
             {
-                // CONFIGURACIÓN DE TU CUENTA
                 var correoEmisor = "votoelectronicoutn@gmail.com";
                 var claveAplicacion = "tanp bcqm ihix pqnd";
 
                 var smtpClient = new SmtpClient("smtp.gmail.com")
                 {
-                    Port = 587,
+                    Port = 2525,
                     UseDefaultCredentials = false,
                     Credentials = new NetworkCredential(correoEmisor, claveAplicacion),
                     EnableSsl = true,
@@ -36,7 +35,7 @@ namespace VotoElectronico.Seguro.Services
             }
             catch (Exception ex)
             {
-                Console.WriteLine("Render bloqueó el correo, pero el usuario ya fue creado.");
+                Console.WriteLine($"Error de correo (SMTP bloqueado): {ex.Message}");
             }
         }
     }
