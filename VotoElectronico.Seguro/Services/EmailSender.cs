@@ -26,5 +26,8 @@ namespace VotoElectronico.Seguro.Services
                 Console.WriteLine($"Error de envío API: {ex.Message}");
             }
         }
+
+
+        //
     }
 }
