@@ -35,7 +35,7 @@ namespace VotoElectronico.Seguro
 
             builder.Services.AddHttpClient("ApiVoto", client =>
             {
-                client.BaseAddress = new Uri("http://localhost:5294/"); // PUERTO DE API
+                client.BaseAddress = new Uri("https://elecciones-12g6.onrender.com/"); // PUERTO DE API
             });
 
             builder.Services.AddTransient<IEmailSender, EmailSender>();
