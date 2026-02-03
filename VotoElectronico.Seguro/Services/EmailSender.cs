@@ -20,7 +20,7 @@ namespace VotoElectronico.Seguro.Services
 
             var client = new SendGridClient(apiKey);
 
-            var from = new EmailAddress("patricioquiguango.08@gmail.com", "Sistema de Voto Electrónico UTN");
+            var from = new EmailAddress("patricioquiguango.08@gmail.com", "Sistema de Voto Electrónico");
             var to = new EmailAddress(email);
             var msg = MailHelper.CreateSingleEmail(from, to, subject, "", htmlMessage);
 
@@ -37,7 +37,6 @@ namespace VotoElectronico.Seguro.Services
             {
                 Console.WriteLine($"[EmailSender] Error crítico al enviar correo: {ex.Message}");
             }
-
 
         }
     }
