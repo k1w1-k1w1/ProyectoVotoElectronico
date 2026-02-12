@@ -20,38 +20,74 @@ public class VotacionController : Controller
 
     public async Task<IActionResult> Index()
     {
-        var client = _httpClientFactory.CreateClient("ApiVoto");
+        try
+        {
+            var client = _httpClientFactory.CreateClient("ApiVoto");
+            var response = await client.GetAsync("api/Elecciones");
 
-        var todas = await client.GetFromJsonAsync<List<Eleccion>>("api/Elecciones");
-        var abiertas = todas?.Where(e => e.Estado == "ABIERTA").ToList() ?? new List<Eleccion>();
+            if ((int)response.StatusCode == 429)
+            {
+                TempData["MensajeError"] = "Servidor ocupado. Por favor, intenta de nuevo en un minuto.";
+                return View("Index", new List<Eleccion>());
+            }
 
-        return View("Index", abiertas);
+            response.EnsureSuccessStatusCode();
+            var todas = await response.Content.ReadFromJsonAsync<List<Eleccion>>();
+            var abiertas = todas?.Where(e => e.Estado == "ABIERTA").ToList() ?? new List<Eleccion>();
+
+            return View("Index", abiertas);
+        }
+        catch
+        {
+            return View("Index", new List<Eleccion>());
+        }
     }
 
     public async Task<IActionResult> Papeleta(int idEleccion)
     {
-        var client = _httpClientFactory.CreateClient("ApiVoto");
-        var email = User.FindFirstValue(ClaimTypes.Email);
-
-        var userResponse = await client.GetAsync($"api/Usuarios/ByEmail/{email}");
-        if (!userResponse.IsSuccessStatusCode) return View("ErrorUsuarioNoRegistrado");
-
-        var usuarioApi = await userResponse.Content.ReadFromJsonAsync<System.Text.Json.JsonElement>();
-        int idUsuario = usuarioApi.GetProperty("IdUsuario").GetInt32();
-
-        var yaVotoResponse = await client.GetAsync($"api/Votos/YaVoto/{idUsuario}/{idEleccion}");
-        if (yaVotoResponse.IsSuccessStatusCode)
+        try
         {
-            var yaVoto = await yaVotoResponse.Content.ReadFromJsonAsync<bool>();
-            if (yaVoto) return View("YaVotaste");
+            var client = _httpClientFactory.CreateClient("ApiVoto");
+            var email = User.FindFirstValue(ClaimTypes.Email);
+
+            // 1. Obtener Usuario
+            var userResponse = await client.GetAsync($"api/Usuarios/ByEmail/{email}");
+            if ((int)userResponse.StatusCode == 429) goto Error429;
+            if (!userResponse.IsSuccessStatusCode) return View("ErrorUsuarioNoRegistrado");
+
+            var usuarioApi = await userResponse.Content.ReadFromJsonAsync<System.Text.Json.JsonElement>();
+            int idUsuario = usuarioApi.GetProperty("IdUsuario").GetInt32();
+
+            // 2. Verificar si ya votó
+            var yaVotoResponse = await client.GetAsync($"api/Votos/YaVoto/{idUsuario}/{idEleccion}");
+            if ((int)yaVotoResponse.StatusCode == 429) goto Error429;
+
+            if (yaVotoResponse.IsSuccessStatusCode)
+            {
+                var yaVoto = await yaVotoResponse.Content.ReadFromJsonAsync<bool>();
+                if (yaVoto) return View("YaVotaste");
+            }
+
+            // 3. Obtener Listas (Agregamos un pequeño delay preventivo)
+            await Task.Delay(100);
+            var listasResponse = await client.GetAsync($"api/ListasPoliticas/eleccion/{idEleccion}");
+            if ((int)listasResponse.StatusCode == 429) goto Error429;
+
+            var listas = await listasResponse.Content.ReadFromJsonAsync<List<dynamic>>();
+
+            ViewBag.IdUsuario = idUsuario;
+            ViewBag.IdEleccion = idEleccion;
+
+            return View("Papeleta", listas);
+        }
+        catch (Exception)
+        {
+            return View("Error");
         }
 
-        var listas = await client.GetFromJsonAsync<List<dynamic>>($"api/ListasPoliticas/eleccion/{idEleccion}");
-
-        ViewBag.IdUsuario = idUsuario;
-        ViewBag.IdEleccion = idEleccion;
-
-        return View("Papeleta", listas);
+    Error429:
+        TempData["MensajeError"] = "Exceso de peticiones. Espera un momento.";
+        return RedirectToAction("Index");
     }
 
     [HttpPost]

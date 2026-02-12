@@ -16,16 +16,33 @@ public class EleccionesController : Controller
     }
 
     // LISTAR ELECCIONES
+    // LISTAR ELECCIONES
     public async Task<IActionResult> Index()
     {
         try
         {
             var client = _httpClientFactory.CreateClient("ApiVoto");
-            var elecciones = await client.GetFromJsonAsync<List<Eleccion>>("api/Elecciones");
-            return View(elecciones);
+
+            // Enviamos la petición y capturamos la respuesta completa
+            var response = await client.GetAsync("api/Elecciones");
+
+            // Verificamos si la API nos ha bloqueado por exceso de peticiones
+            if ((int)response.StatusCode == 429)
+            {
+                TempData["Error"] = "Has realizado demasiadas peticiones. Por favor, espera un minuto antes de intentar de nuevo.";
+                return View(new List<Eleccion>());
+            }
+
+            // Si es otro error (500, 404, etc), esto lanzará una excepción que caerá en el catch
+            response.EnsureSuccessStatusCode();
+
+            var elecciones = await response.Content.ReadFromJsonAsync<List<Eleccion>>();
+            return View(elecciones ?? new List<Eleccion>());
         }
-        catch (Exception)
+        catch (Exception ex)
         {
+            // Log de error opcional
+            TempData["Error"] = "No se pudo conectar con el servicio de Elecciones.";
             return View(new List<Eleccion>());
         }
     }

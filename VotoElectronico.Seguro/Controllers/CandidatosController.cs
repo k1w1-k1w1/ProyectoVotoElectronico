@@ -133,16 +133,34 @@ public class CandidatosController : Controller
 
     public async Task<IActionResult> Index()
     {
-        var client = _httpClientFactory.CreateClient("ApiVoto");
-
-        var opciones = new System.Text.Json.JsonSerializerOptions
+        try
         {
-            PropertyNameCaseInsensitive = true,
-            ReferenceHandler = System.Text.Json.Serialization.ReferenceHandler.IgnoreCycles
-        };
+            var client = _httpClientFactory.CreateClient("ApiVoto");
 
-        var candidatos = await client.GetFromJsonAsync<List<ProyectoVotoElectronico.Candidato>>("api/Candidatos", opciones);
+            var opciones = new System.Text.Json.JsonSerializerOptions
+            {
+                PropertyNameCaseInsensitive = true,
+                ReferenceHandler = System.Text.Json.Serialization.ReferenceHandler.IgnoreCycles
+            };
 
-        return View(candidatos ?? new List<ProyectoVotoElectronico.Candidato>());
+            // Intentamos obtener los datos
+            var response = await client.GetAsync("api/Candidatos");
+
+            if ((int)response.StatusCode == 429)
+            {
+                // Si la API nos bloquea, enviamos un mensaje a la vista en lugar de que explote
+                TempData["Error"] = "El servidor de datos está saturado. Por favor, espera un momento.";
+                return View(new List<ProyectoVotoElectronico.Candidato>());
+            }
+
+            response.EnsureSuccessStatusCode();
+            var candidatos = await response.Content.ReadFromJsonAsync<List<ProyectoVotoElectronico.Candidato>>(opciones);
+            return View(candidatos ?? new List<ProyectoVotoElectronico.Candidato>());
+        }
+        catch (HttpRequestException)
+        {
+            TempData["Error"] = "No se pudo conectar con el servicio de datos.";
+            return View(new List<ProyectoVotoElectronico.Candidato>());
+        }
     }
 }

@@ -72,6 +72,7 @@ public class ListasController : Controller
     }
 
     // GET: Listas/Index
+    // GET: Listas/Index
     public async Task<IActionResult> Index()
     {
         try
@@ -84,13 +85,55 @@ public class ListasController : Controller
                 ReferenceHandler = System.Text.Json.Serialization.ReferenceHandler.IgnoreCycles
             };
 
-            var listas = await client.GetFromJsonAsync<List<ProyectoVotoElectronico.ListaPolitica>>("api/ListasPoliticas", opciones);
+            // Cambio: Usar GetAsync para inspeccionar el Status Code antes de deserializar
+            var response = await client.GetAsync("api/ListasPoliticas");
+
+            if ((int)response.StatusCode == 429)
+            {
+                TempData["Error"] = "Servidor saturado. Por favor, espere un momento para listar las listas políticas.";
+                return View(new List<ProyectoVotoElectronico.ListaPolitica>());
+            }
+
+            response.EnsureSuccessStatusCode();
+            var listas = await response.Content.ReadFromJsonAsync<List<ProyectoVotoElectronico.ListaPolitica>>(opciones);
 
             return View(listas ?? new List<ProyectoVotoElectronico.ListaPolitica>());
         }
         catch (Exception ex)
         {
+            TempData["Error"] = "Error de conexión con el servicio de listas.";
             return View(new List<ProyectoVotoElectronico.ListaPolitica>());
+        }
+    }
+
+    private async Task CargarEleccionesEnViewBag(int? selectedId)
+    {
+        try
+        {
+            var client = _httpClientFactory.CreateClient("ApiVoto");
+
+            var opciones = new System.Text.Json.JsonSerializerOptions
+            {
+                PropertyNameCaseInsensitive = true,
+                ReferenceHandler = System.Text.Json.Serialization.ReferenceHandler.IgnoreCycles
+            };
+
+            var response = await client.GetAsync("api/Elecciones");
+
+            if (response.IsSuccessStatusCode)
+            {
+                var elecciones = await response.Content.ReadFromJsonAsync<List<ProyectoVotoElectronico.Eleccion>>(opciones);
+                var filtradas = elecciones?.Where(e => e.Tipo?.ToUpper() == "PLANCHA").ToList() ?? new List<ProyectoVotoElectronico.Eleccion>();
+                ViewBag.Elecciones = new SelectList(filtradas, "IdEleccion", "Nombre", selectedId);
+            }
+            else
+            {
+                ViewBag.Elecciones = new SelectList(new List<ProyectoVotoElectronico.Eleccion>(), "IdEleccion", "Nombre");
+            }
+        }
+        catch
+        {
+            ViewBag.Elecciones = new SelectList(new List<ProyectoVotoElectronico.Eleccion>(), "IdEleccion", "Nombre");
         }
     }
 
@@ -112,21 +155,8 @@ public class ListasController : Controller
         return $"/uploads/{subcarpeta}/{uniqueFileName}";
     }
 
-    private async Task CargarEleccionesEnViewBag(int? selectedId)
-    {
-        var client = _httpClientFactory.CreateClient("ApiVoto");
-
-        var opciones = new System.Text.Json.JsonSerializerOptions
-        {
-            PropertyNameCaseInsensitive = true,
-            ReferenceHandler = System.Text.Json.Serialization.ReferenceHandler.IgnoreCycles
-        };
-
-        var elecciones = await client.GetFromJsonAsync<List<ProyectoVotoElectronico.Eleccion>>("api/Elecciones", opciones);
-
-        var filtradas = elecciones?.Where(e => e.Tipo?.ToUpper() == "PLANCHA").ToList() ?? new List<ProyectoVotoElectronico.Eleccion>();
-        ViewBag.Elecciones = new SelectList(filtradas, "IdEleccion", "Nombre", selectedId);
-    }
+   
+    
 
     // GET: Listas/Eliminar/5
     public async Task<IActionResult> Eliminar(int id)
