@@ -57,13 +57,17 @@ namespace voto.API.Controllers
         [HttpPost]
         public async Task<ActionResult<Eleccion>> PostEleccion(Eleccion eleccion)
         {
-            if (eleccion.FechaInicio >= eleccion.FechaFin)
-            {
-                return BadRequest("La fecha de inicio debe ser anterior a la fecha de fin.");
-            }
+            //if (eleccion.FechaInicio >= eleccion.FechaFin)
+            //{
+            //    return BadRequest("La fecha de inicio debe ser anterior a la fecha de fin.");
+            //}
 
             // Calculamos el estado basándonos en la fecha que viene del MVC
             CalcularEstadoSinGuardar(eleccion);
+
+
+            Console.WriteLine(eleccion.FechaInicio);
+            Console.WriteLine(eleccion.FechaFin);
 
             _context.Elecciones.Add(eleccion);
             await _context.SaveChangesAsync();
