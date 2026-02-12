@@ -136,10 +136,14 @@ namespace voto.API.Controllers
         {
             if (e.Estado == "CERRADA") return;
 
-            var ahora = DateTime.Now;
-            if (ahora >= e.FechaInicio && ahora <= e.FechaFin)
+            var ahora = DateTime.UtcNow;
+
+            var inicioUtc = e.FechaInicio.ToUniversalTime();
+            var finUtc = e.FechaFin.ToUniversalTime();
+
+            if (ahora >= inicioUtc && ahora <= finUtc)
                 e.Estado = "ABIERTA";
-            else if (ahora > e.FechaFin)
+            else if (ahora > finUtc)
                 e.Estado = "CERRADA";
             else
                 e.Estado = "PROGRAMADA";
@@ -147,16 +151,22 @@ namespace voto.API.Controllers
             _context.Entry(e).State = EntityState.Modified;
         }
 
+
         private void CalcularEstadoSinGuardar(Eleccion e)
         {
-            var ahora = DateTime.Now;
-            if (ahora >= e.FechaInicio && ahora <= e.FechaFin)
+            var ahora = DateTime.UtcNow;
+
+            var inicioUtc = e.FechaInicio.ToUniversalTime();
+            var finUtc = e.FechaFin.ToUniversalTime();
+
+            if (ahora >= inicioUtc && ahora <= finUtc)
                 e.Estado = "ABIERTA";
-            else if (ahora > e.FechaFin)
+            else if (ahora > finUtc)
                 e.Estado = "CERRADA";
             else
                 e.Estado = "PROGRAMADA";
         }
+
 
         private bool EleccionExists(int id)
         {

@@ -67,7 +67,9 @@ public class EleccionesController : Controller
                 return RedirectToAction(nameof(Index));
             }
 
-            ModelState.AddModelError(string.Empty, "Error al guardar en la API.");
+            var error = await response.Content.ReadAsStringAsync();
+            ModelState.AddModelError(string.Empty, $"Error API: {error}");
+
         }
         return View(eleccion);
     }
