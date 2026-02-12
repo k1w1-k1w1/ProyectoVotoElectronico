@@ -66,8 +66,14 @@ namespace voto.API.Controllers
             CalcularEstadoSinGuardar(eleccion);
 
 
-            Console.WriteLine(eleccion.FechaInicio);
-            Console.WriteLine(eleccion.FechaFin);
+            Console.WriteLine("====== DEBUG ELECCION ======");
+            Console.WriteLine("Servidor UTC Now: " + DateTime.UtcNow);
+            Console.WriteLine("FechaInicio RAW: " + eleccion.FechaInicio);
+            Console.WriteLine("FechaFin RAW: " + eleccion.FechaFin);
+            Console.WriteLine("FechaInicio UTC: " + eleccion.FechaInicio.ToUniversalTime());
+            Console.WriteLine("FechaFin UTC: " + eleccion.FechaFin.ToUniversalTime());
+            Console.WriteLine("============================");
+
 
             _context.Elecciones.Add(eleccion);
             await _context.SaveChangesAsync();
@@ -136,14 +142,11 @@ namespace voto.API.Controllers
         {
             if (e.Estado == "CERRADA") return;
 
-            var ahora = DateTime.UtcNow;
+            var ahora = DateTime.Now;
 
-            var inicioUtc = e.FechaInicio.ToUniversalTime();
-            var finUtc = e.FechaFin.ToUniversalTime();
-
-            if (ahora >= inicioUtc && ahora <= finUtc)
+            if (ahora >= e.FechaInicio && ahora <= e.FechaFin)
                 e.Estado = "ABIERTA";
-            else if (ahora > finUtc)
+            else if (ahora > e.FechaFin)
                 e.Estado = "CERRADA";
             else
                 e.Estado = "PROGRAMADA";
@@ -152,20 +155,19 @@ namespace voto.API.Controllers
         }
 
 
+
         private void CalcularEstadoSinGuardar(Eleccion e)
         {
-            var ahora = DateTime.UtcNow;
+            var ahora = DateTime.Now;
 
-            var inicioUtc = e.FechaInicio.ToUniversalTime();
-            var finUtc = e.FechaFin.ToUniversalTime();
-
-            if (ahora >= inicioUtc && ahora <= finUtc)
+            if (ahora >= e.FechaInicio && ahora <= e.FechaFin)
                 e.Estado = "ABIERTA";
-            else if (ahora > finUtc)
+            else if (ahora > e.FechaFin)
                 e.Estado = "CERRADA";
             else
                 e.Estado = "PROGRAMADA";
         }
+
 
 
         private bool EleccionExists(int id)
