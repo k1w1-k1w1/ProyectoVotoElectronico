@@ -144,12 +144,10 @@ namespace voto.API.Controllers
         {
             if (e.Estado == "CERRADA") return;
 
-            // 1. Obtenemos la hora actual en Ecuador
+            // Esto convierte la hora de Render (01:49 AM) a la hora de Ecuador (08:49 PM)
             var ecuadorZone = TimeZoneInfo.FindSystemTimeZoneById("SA Pacific Standard Time");
             var ahora = TimeZoneInfo.ConvertTimeFromUtc(DateTime.UtcNow, ecuadorZone);
 
-            // 2. IMPORTANTE: Asegúrate de que FechaInicio y FechaFin se comparen correctamente.
-            // Si en la DB están como UTC, hay que convertirlas también a la zona de Ecuador antes de comparar.
             if (ahora >= e.FechaInicio && ahora <= e.FechaFin)
                 e.Estado = "ABIERTA";
             else if (ahora > e.FechaFin)
