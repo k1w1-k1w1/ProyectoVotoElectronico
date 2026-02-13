@@ -75,6 +75,8 @@ namespace voto.API.Controllers
             Console.WriteLine("============================");
 
 
+
+
             _context.Elecciones.Add(eleccion);
             await _context.SaveChangesAsync();
 
@@ -142,7 +144,8 @@ namespace voto.API.Controllers
         {
             if (e.Estado == "CERRADA") return;
 
-            var ahora = DateTime.Now;
+            var ecuadorZone = TimeZoneInfo.FindSystemTimeZoneById("SA Pacific Standard Time");
+            var ahora = TimeZoneInfo.ConvertTimeFromUtc(DateTime.UtcNow, ecuadorZone);
 
             if (ahora >= e.FechaInicio && ahora <= e.FechaFin)
                 e.Estado = "ABIERTA";
@@ -156,9 +159,15 @@ namespace voto.API.Controllers
 
 
 
+
         private void CalcularEstadoSinGuardar(Eleccion e)
         {
-            var ahora = DateTime.Now;
+            var ecuadorZone = TimeZoneInfo.FindSystemTimeZoneById("SA Pacific Standard Time");
+            var ahora = TimeZoneInfo.ConvertTimeFromUtc(DateTime.UtcNow, ecuadorZone);
+
+            Console.WriteLine("Hora Ecuador: " + ahora);
+            Console.WriteLine("FechaFin: " + e.FechaFin);
+
 
             if (ahora >= e.FechaInicio && ahora <= e.FechaFin)
                 e.Estado = "ABIERTA";
@@ -167,6 +176,7 @@ namespace voto.API.Controllers
             else
                 e.Estado = "PROGRAMADA";
         }
+
 
 
 
