@@ -144,8 +144,9 @@ namespace voto.API.Controllers
         {
             if (e.Estado == "CERRADA") return;
 
-            // Esto convierte la hora de Render (01:49 AM) a la hora de Ecuador (08:49 PM)
+            // Localizamos la zona horaria de Ecuador (SA Pacific Standard Time)
             var ecuadorZone = TimeZoneInfo.FindSystemTimeZoneById("SA Pacific Standard Time");
+            // Convertimos la hora UTC actual del servidor a la hora actual de Ecuador
             var ahora = TimeZoneInfo.ConvertTimeFromUtc(DateTime.UtcNow, ecuadorZone);
 
             if (ahora >= e.FechaInicio && ahora <= e.FechaFin)
