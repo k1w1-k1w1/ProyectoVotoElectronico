@@ -57,25 +57,21 @@ namespace voto.API.Controllers
         [HttpPost]
         public async Task<ActionResult<Eleccion>> PostEleccion(Eleccion eleccion)
         {
-            //if (eleccion.FechaInicio >= eleccion.FechaFin)
-            //{
-            //    return BadRequest("La fecha de inicio debe ser anterior a la fecha de fin.");
-            //}
+            // 1. DESCOMENTA ESTO: Es tu primera línea de defensa
+            if (eleccion.FechaInicio >= eleccion.FechaFin)
+            {
+                return BadRequest("La fecha de inicio debe ser anterior a la fecha de fin.");
+            }
 
-            // Calculamos el estado basándonos en la fecha que viene del MVC
+            // 2. Calcula el estado usando la hora de Ecuador (UTC-5)
             CalcularEstadoSinGuardar(eleccion);
 
-
+            // Debug para ver qué llega exactamente
             Console.WriteLine("====== DEBUG ELECCION ======");
             Console.WriteLine("Servidor UTC Now: " + DateTime.UtcNow);
             Console.WriteLine("FechaInicio RAW: " + eleccion.FechaInicio);
             Console.WriteLine("FechaFin RAW: " + eleccion.FechaFin);
-            Console.WriteLine("FechaInicio UTC: " + eleccion.FechaInicio.ToUniversalTime());
-            Console.WriteLine("FechaFin UTC: " + eleccion.FechaFin.ToUniversalTime());
             Console.WriteLine("============================");
-
-
-
 
             _context.Elecciones.Add(eleccion);
             await _context.SaveChangesAsync();
