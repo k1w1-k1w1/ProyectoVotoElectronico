@@ -160,14 +160,11 @@ namespace voto.API.Controllers
 
 
 
+
         private void CalcularEstadoSinGuardar(Eleccion e)
         {
             var ecuadorZone = TimeZoneInfo.FindSystemTimeZoneById("SA Pacific Standard Time");
             var ahora = TimeZoneInfo.ConvertTimeFromUtc(DateTime.UtcNow, ecuadorZone);
-
-            Console.WriteLine("Hora Ecuador: " + ahora);
-            Console.WriteLine("FechaFin: " + e.FechaFin);
-
 
             if (ahora >= e.FechaInicio && ahora <= e.FechaFin)
                 e.Estado = "ABIERTA";
@@ -176,8 +173,6 @@ namespace voto.API.Controllers
             else
                 e.Estado = "PROGRAMADA";
         }
-
-
 
 
         private bool EleccionExists(int id)
