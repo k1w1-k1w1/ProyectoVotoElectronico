@@ -66,7 +66,9 @@
                                         string cargo = cand.GetProperty("Cargo").GetString();
 
                                         string fotoPath = cand.GetProperty("FotoUrl").GetString() ?? "";
-                                        string rutaFinal = fotoPath.StartsWith("/") ? fotoPath : "/" + fotoPath;
+                                        string rutaFinal = fotoPath.StartsWith("http", StringComparison.OrdinalIgnoreCase)
+                                            ? fotoPath
+                                            : (fotoPath.StartsWith("/") ? fotoPath : "/" + fotoPath);
 
                                         if (idPrimerCandidato == null) idPrimerCandidato = idObtenido;
 

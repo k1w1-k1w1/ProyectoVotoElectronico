@@ -33,7 +33,7 @@ public class ListasController : Controller
         {
             try
             {
-                string rutaLogo = "/img/default-logo.png";
+                string rutaLogo = ConstruirUrlPublica("/img/default-logo.png");
 
                 if (model.FotoLogo != null && model.FotoLogo.Length > 0)
                 {
@@ -141,10 +141,12 @@ public class ListasController : Controller
     {
         if (archivo == null) return null;
 
-        string uploadsFolder = Path.Combine(_hostEnvironment.WebRootPath, "uploads", subcarpeta);
+        var webRoot = _hostEnvironment.WebRootPath ?? Path.Combine(_hostEnvironment.ContentRootPath, "wwwroot");
+        string uploadsFolder = Path.Combine(webRoot, "uploads", subcarpeta);
         if (!Directory.Exists(uploadsFolder)) Directory.CreateDirectory(uploadsFolder);
 
-        string uniqueFileName = Guid.NewGuid().ToString() + "_" + archivo.FileName;
+        string safeFileName = Path.GetFileName(archivo.FileName);
+        string uniqueFileName = Guid.NewGuid().ToString() + "_" + safeFileName;
         string filePath = Path.Combine(uploadsFolder, uniqueFileName);
 
         using (var fileStream = new FileStream(filePath, FileMode.Create))
@@ -152,7 +154,16 @@ public class ListasController : Controller
             await archivo.CopyToAsync(fileStream);
         }
 
-        return $"/uploads/{subcarpeta}/{uniqueFileName}";
+        return ConstruirUrlPublica($"/uploads/{subcarpeta}/{uniqueFileName}");
+    }
+
+    private string ConstruirUrlPublica(string rutaRelativa)
+    {
+        if (string.IsNullOrWhiteSpace(rutaRelativa)) return rutaRelativa;
+        if (rutaRelativa.StartsWith("http", StringComparison.OrdinalIgnoreCase)) return rutaRelativa;
+
+        var rutaNormalizada = rutaRelativa.StartsWith('/') ? rutaRelativa : "/" + rutaRelativa;
+        return $"{Request.Scheme}://{Request.Host}{rutaNormalizada}";
     }
 
    

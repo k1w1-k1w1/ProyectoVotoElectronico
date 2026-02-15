@@ -61,7 +61,7 @@ public class CandidatosController : Controller
 
         if (ModelState.IsValid)
         {
-            string rutaFoto = "/img/default-user.png";
+            string rutaFoto = ConstruirUrlPublica("/img/default-user.png");
 
             if (model.Foto != null && model.Foto.Length > 0)
             {   
@@ -102,15 +102,28 @@ public class CandidatosController : Controller
     private async Task<string> GuardarArchivo(IFormFile archivo, string subcarpeta)
     {
         if (archivo == null) return null;
-        string uploadsFolder = Path.Combine(_hostEnvironment.WebRootPath, "uploads", subcarpeta);
+
+        var webRoot = _hostEnvironment.WebRootPath ?? Path.Combine(_hostEnvironment.ContentRootPath, "wwwroot");
+        string uploadsFolder = Path.Combine(webRoot, "uploads", subcarpeta);
         if (!Directory.Exists(uploadsFolder)) Directory.CreateDirectory(uploadsFolder);
-        string uniqueFileName = Guid.NewGuid().ToString() + "_" + archivo.FileName;
+        string safeFileName = Path.GetFileName(archivo.FileName);
+        string uniqueFileName = Guid.NewGuid().ToString() + "_" + safeFileName;
         string filePath = Path.Combine(uploadsFolder, uniqueFileName);
         using (var fileStream = new FileStream(filePath, FileMode.Create))
         {
             await archivo.CopyToAsync(fileStream);
         }
-        return $"/uploads/{subcarpeta}/{uniqueFileName}";
+
+        return ConstruirUrlPublica($"/uploads/{subcarpeta}/{uniqueFileName}");
+    }
+
+    private string ConstruirUrlPublica(string rutaRelativa)
+    {
+        if (string.IsNullOrWhiteSpace(rutaRelativa)) return rutaRelativa;
+        if (rutaRelativa.StartsWith("http", StringComparison.OrdinalIgnoreCase)) return rutaRelativa;
+
+        var rutaNormalizada = rutaRelativa.StartsWith('/') ? rutaRelativa : "/" + rutaRelativa;
+        return $"{Request.Scheme}://{Request.Host}{rutaNormalizada}";
     }
 
     [HttpPost]

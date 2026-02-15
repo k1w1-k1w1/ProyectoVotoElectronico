@@ -1,4 +1,5 @@
 ﻿using Microsoft.AspNetCore.Identity.UI.Services;
+using Microsoft.Extensions.Configuration;
 using SendGrid;
 using SendGrid.Helpers.Mail;
 using System;
@@ -8,19 +9,35 @@ namespace VotoElectronico.Seguro.Services
 {
     public class EmailSender : IEmailSender
     {
+        private readonly IConfiguration _configuration;
+
+        public EmailSender(IConfiguration configuration)
+        {
+            _configuration = configuration;
+        }
+
         public async Task SendEmailAsync(string email, string subject, string htmlMessage)
         {
-            var apiKey = Environment.GetEnvironmentVariable("SENDGRID_API_KEY");
+            var apiKey = Environment.GetEnvironmentVariable("SENDGRID_API_KEY")
+                ?? _configuration["SendGrid:ApiKey"];
+
+            var fromEmail = _configuration["SendGrid:FromEmail"]
+                ?? Environment.GetEnvironmentVariable("SENDGRID_FROM_EMAIL")
+                ?? "no-reply@votoelectronico.local";
+
+            var fromName = _configuration["SendGrid:FromName"]
+                ?? Environment.GetEnvironmentVariable("SENDGRID_FROM_NAME")
+                ?? "Sistema de Voto Electrónico";
 
             if (string.IsNullOrEmpty(apiKey))
             {
-                Console.WriteLine("ERROR: La variable de entorno SENDGRID_API_KEY no está configurada en Render.");
+                Console.WriteLine("ERROR: No se encontró la API Key de SendGrid (SENDGRID_API_KEY o SendGrid:ApiKey).");
                 return;
             }
 
             var client = new SendGridClient(apiKey);
 
-            var from = new EmailAddress("patricioquiguango.08@gmail.com", "Sistema de Voto Electrónico");
+            var from = new EmailAddress(fromEmail, fromName);
             var to = new EmailAddress(email);
             var msg = MailHelper.CreateSingleEmail(from, to, subject, "", htmlMessage);
 
